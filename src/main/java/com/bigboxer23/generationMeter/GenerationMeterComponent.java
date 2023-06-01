@@ -4,6 +4,8 @@ import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
 import okhttp3.Response;
@@ -21,6 +23,9 @@ public class GenerationMeterComponent {
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
+	@Value("${generation-meter-name}")
+	private String name;
+
 	@Value("${generation-meter-url}")
 	private String apiUrl;
 
@@ -32,7 +37,11 @@ public class GenerationMeterComponent {
 
 	private ElasticComponent elastic;
 
-	// @Scheduled(fixedDelay = 1000)
+	public GenerationMeterComponent(ElasticComponent elastic) {
+		this.elastic = elastic;
+	}
+
+	// @Scheduled(fixedDelay = 15000)
 	@Scheduled(cron = "${scheduler-time}")
 	private void fetchData() throws IOException, XPathExpressionException {
 		logger.info("starting fetch of data");
@@ -40,17 +49,29 @@ public class GenerationMeterComponent {
 			String body = response.body().string();
 			logger.debug("fetched data: " + body);
 			InputSource xml = new InputSource(new StringReader(body));
-			XPath xpath = XPathFactory.newInstance().newXPath();
-			String expression = "/DAS/devices/device/records/record/point";
-			XPathExpression xPathExpression = xpath.compile(expression);
-
-			// Evaluate the XPath expression and print the results
-			NodeList nodes = (NodeList) xPathExpression.evaluate(xml, XPathConstants.NODESET);
+			NodeList nodes = (NodeList) XPathFactory.newInstance()
+					.newXPath()
+					.compile("/DAS/devices/device/records/record/point")
+					.evaluate(xml, XPathConstants.NODESET);
+			Map<String, DeviceAttribute> attributes = new HashMap<>();
 			for (int i = 0; i < nodes.getLength(); i++) {
-				logger.info(nodes.item(i).getAttributes().getNamedItem("name").getNodeValue());
-				logger.info(nodes.item(i).getAttributes().getNamedItem("value").getNodeValue());
-				logger.info(nodes.item(i).getAttributes().getNamedItem("units").getNodeValue());
+				String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
+				attributes.put(
+						name,
+						new DeviceAttribute(
+								name,
+								nodes.item(i)
+										.getAttributes()
+										.getNamedItem("units")
+										.getNodeValue(),
+								Float.parseFloat(nodes.item(i)
+										.getAttributes()
+										.getNamedItem("value")
+										.getNodeValue())));
 			}
+			logger.debug("sending to elastic component");
+			elastic.logData(name, attributes);
+			logger.info("end of fetch data");
 		}
 	}
 
