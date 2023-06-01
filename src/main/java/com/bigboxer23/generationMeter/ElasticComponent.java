@@ -4,10 +4,12 @@ import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
@@ -29,23 +31,17 @@ public class ElasticComponent {
 
 	private static final String TYPE = "Status";
 
-	public void logData(String deviceName, Map<String, DeviceAttribute> devices) {
+	public void logData(String deviceName, List<DeviceAttribute> devices) {
 		logger.debug("logData");
 		BulkRequest bulkRequest = new BulkRequest();
 		Map<String, Object> document = new HashMap<>();
-		devices.forEach((name, device) -> {
-			document.put(name, device.getValue());
-		});
+		devices.forEach((device) -> document.put(device.getName(), device.getValue()));
 		document.put("@timestamp", new Date());
 		bulkRequest.add(
 				new IndexRequest(INDEX_NAME, TYPE, deviceName + ":" + System.currentTimeMillis()).source(document));
-		try {
-			if (bulkRequest.numberOfActions() > 0) {
-				logger.debug("Sending Request to elastic");
-				getClient().bulk(bulkRequest);
-			}
-		} catch (IOException theE) {
-			logger.error("logStatusEvent:", theE);
+		if (bulkRequest.numberOfActions() > 0) {
+			logger.debug("Sending Request to elastic");
+			getClient().bulkAsync(bulkRequest, RequestOptions.DEFAULT, null);
 		}
 	}
 

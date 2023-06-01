@@ -4,14 +4,15 @@ import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
 import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.NodeList;
@@ -26,6 +27,9 @@ public class GenerationMeterComponent {
 	@Value("${generation-meter-name}")
 	private String name;
 
+	@Value("${generation-meter-site}")
+	private String site;
+
 	@Value("${generation-meter-url}")
 	private String apiUrl;
 
@@ -35,13 +39,22 @@ public class GenerationMeterComponent {
 	@Value("${generation-meter-pass}")
 	private String apiPass;
 
-	private ElasticComponent elastic;
+	private final ElasticComponent elastic;
 
-	public GenerationMeterComponent(ElasticComponent elastic) {
+	private Set<String> fields = new HashSet<>();
+
+	public GenerationMeterComponent(ElasticComponent elastic, Environment env) {
 		this.elastic = elastic;
+		String fieldString = env.getProperty("generation-meter-fields");
+		if (fieldString != null) {
+			fields = Arrays.stream(fieldString.split(","))
+					.map(String::trim)
+					.filter(field -> !field.isEmpty())
+					.collect(Collectors.toSet());
+		}
 	}
 
-	// @Scheduled(fixedDelay = 15000)
+	// @Scheduled(fixedDelay = 50000)
 	@Scheduled(cron = "${scheduler-time}")
 	private void fetchData() throws IOException, XPathExpressionException {
 		logger.info("starting fetch of data");
@@ -53,22 +66,21 @@ public class GenerationMeterComponent {
 					.newXPath()
 					.compile("/DAS/devices/device/records/record/point")
 					.evaluate(xml, XPathConstants.NODESET);
-			Map<String, DeviceAttribute> attributes = new HashMap<>();
+			List<DeviceAttribute> attributes = new ArrayList<>();
 			for (int i = 0; i < nodes.getLength(); i++) {
 				String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
-				attributes.put(
-						name,
-						new DeviceAttribute(
-								name,
-								nodes.item(i)
-										.getAttributes()
-										.getNamedItem("units")
-										.getNodeValue(),
-								Float.parseFloat(nodes.item(i)
-										.getAttributes()
-										.getNamedItem("value")
-										.getNodeValue())));
+				if (fields.contains(name)) {
+					attributes.add(new DeviceAttribute(
+							name,
+							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
+							Float.parseFloat(nodes.item(i)
+									.getAttributes()
+									.getNamedItem("value")
+									.getNodeValue())));
+				}
 			}
+			attributes.add(new DeviceAttribute("site", "", site));
+			attributes.add(new DeviceAttribute("device-name", "", name));
 			logger.debug("sending to elastic component");
 			elastic.logData(name, attributes);
 			logger.info("end of fetch data");
