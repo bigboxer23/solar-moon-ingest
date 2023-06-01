@@ -16,5 +16,10 @@
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="github" />
+      <option name="name" value="GitHub bigboxer23 Maven Packages" />
+      <option name="url" value="https://maven.pkg.github.com/bigboxer23/_" />
+    </remote-repository>
   </component>
 </project>
