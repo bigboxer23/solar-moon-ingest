@@ -8,9 +8,9 @@ public class DeviceAttribute {
 	private String name;
 
 	private String unit;
-	private float value;
+	private Object value;
 
-	public DeviceAttribute(String name, String unit, float value) {
+	public DeviceAttribute(String name, String unit, Object value) {
 		setName(name);
 		setUnit(unit);
 		setValue(value);
