@@ -41,7 +41,14 @@ public class ElasticComponent {
 				new IndexRequest(INDEX_NAME, TYPE, deviceName + ":" + System.currentTimeMillis()).source(document));
 		if (bulkRequest.numberOfActions() > 0) {
 			logger.debug("Sending Request to elastic");
-			getClient().bulkAsync(bulkRequest, RequestOptions.DEFAULT, null);
+			try {
+				if (bulkRequest.numberOfActions() > 0) {
+					logger.debug("Sending Request to elastic");
+					getClient().bulk(bulkRequest);
+				}
+			} catch (IOException theE) {
+				logger.error("logStatusEvent:", theE);
+			}
 		}
 	}
 
