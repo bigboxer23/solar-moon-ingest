@@ -14,7 +14,7 @@
 	<logger name="com.bigboxer23" level="INFO"/>
 	<logger name="com.gargoylesoftware.htmlunit.html.BaseFrameElement" level="OFF"/>
 	<root level="INFO">
-		<appender-ref ref="STDOUT" />
-		<!--<appender-ref ref="stash" />-->
+		<!--<appender-ref ref="STDOUT" />-->
+		<appender-ref ref="stash" />
 	</root>
 </configuration>

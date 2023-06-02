@@ -126,6 +126,7 @@
           <target>17</target>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -143,6 +144,22 @@
           </dependency>
 
         </dependencies>
+        <executions>
+          <execution>
+            <id>scp-to-remote</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <target>
+                <scp file="${project.basedir}/target/generation-meter-to-elastic-1.0.jar" keyfile="${user.home}/.ssh/id_rsa" passphrase="" todir="pi@${host}:/home/pi/com/bigboxer23/generation-meter-to-elastic/1.0" trust="true"/>
+                <sshexec command="sudo pkill -f 'java.*generation-meter-to-elastic-1.0*'" host="${host}" keyfile="${user.home}/.ssh/id_rsa" trust="true" username="pi"/>
+                <sshexec command="cd /home/pi/com/bigboxer23/generation-meter-to-elastic/1.0/ ;nohup java -jar /home/pi/com/bigboxer23/generation-meter-to-elastic/1.0/generation-meter-to-elastic-1.0.jar &amp;" host="${host}" keyfile="${user.home}/.ssh/id_rsa" trust="true" username="pi"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
