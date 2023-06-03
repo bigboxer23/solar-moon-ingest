@@ -45,6 +45,8 @@ public class GenerationMeterComponent {
 
 	private Servers servers;
 
+	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
+
 	public GenerationMeterComponent(ElasticComponent elastic, Environment env) {
 		this.elastic = elastic;
 		String fieldString = env.getProperty("generation-meter-fields");
@@ -103,11 +105,37 @@ public class GenerationMeterComponent {
 				}
 				attributes.add(new DeviceAttribute("site", "", server.getSite()));
 				attributes.add(new DeviceAttribute("device-name", "", server.getName()));
+				calculateTotalEnergyConsumed(server.getName(), attributes);
 				logger.debug("sending to elastic component");
 				elastic.logData(server.getName(), attributes);
 				logger.info("end of fetch data");
 			}
 		}
+	}
+
+	/**
+	 * Calculate the difference of power consumed since the last run. Add a new field with the
+	 * difference
+	 *
+	 * @param serverName
+	 * @param attr
+	 */
+	private void calculateTotalEnergyConsumed(String serverName, List<DeviceAttribute> attr) {
+		logger.debug("calculating total energy consumed.");
+		Optional<DeviceAttribute> totalEnergyConsumption = attr.stream()
+				.filter(device -> device.getName().equals("Total Energy Consumption"))
+				.findAny();
+		if (totalEnergyConsumption.isEmpty()) {
+			return;
+		}
+		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.get(serverName);
+		if (previousTotalEnergyConsumed != null) {
+			float energyConsumed = (Float) totalEnergyConsumption.get().getValue() - previousTotalEnergyConsumed;
+			attr.add(new DeviceAttribute(
+					"energy-consumption", totalEnergyConsumption.get().getUnit(), energyConsumed));
+		}
+		deviceTotalEnergyConsumed.put(
+				serverName, (Float) totalEnergyConsumption.get().getValue());
 	}
 
 	private RequestBuilderCallback getAuthCallback() {
