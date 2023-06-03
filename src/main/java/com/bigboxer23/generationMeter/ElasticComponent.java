@@ -1,5 +1,6 @@
 package com.bigboxer23.generationMeter;
 
+import com.bigboxer23.generationMeter.data.DeviceAttribute;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Date;

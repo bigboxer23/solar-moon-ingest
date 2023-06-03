@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.generationMeter.data;
 
 import lombok.Data;
 
@@ -8,6 +8,7 @@ public class DeviceAttribute {
 	private String name;
 
 	private String unit;
+
 	private Object value;
 
 	public DeviceAttribute(String name, String unit, Object value) {
