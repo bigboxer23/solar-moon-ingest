@@ -1,14 +1,21 @@
 package com.bigboxer23.generationMeter;
 
+import com.bigboxer23.generationMeter.data.DeviceAttribute;
+import com.bigboxer23.generationMeter.data.Server;
+import com.bigboxer23.generationMeter.data.Servers;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
+import com.squareup.moshi.Moshi;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
 import okhttp3.Response;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,24 +31,19 @@ public class GenerationMeterComponent {
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
-	@Value("${generation-meter-name}")
-	private String name;
-
-	@Value("${generation-meter-site}")
-	private String site;
-
-	@Value("${generation-meter-url}")
-	private String apiUrl;
-
 	@Value("${generation-meter-user}")
 	private String apiUser;
 
 	@Value("${generation-meter-pass}")
 	private String apiPass;
 
+	private final Moshi moshi = new Moshi.Builder().build();
+
 	private final ElasticComponent elastic;
 
 	private Set<String> fields = new HashSet<>();
+
+	private Servers servers;
 
 	public GenerationMeterComponent(ElasticComponent elastic, Environment env) {
 		this.elastic = elastic;
@@ -54,36 +56,57 @@ public class GenerationMeterComponent {
 		}
 	}
 
+	private boolean loadConfig() throws IOException {
+		File config = new File(System.getProperty("user.dir") + File.separator + "servers.json");
+		if (!config.exists()) {
+			logger.warn("no servers.json file exists, not doing anything");
+			return false;
+		}
+		servers = moshi.adapter(Servers.class)
+				.fromJson(FileUtils.readFileToString(config, Charset.defaultCharset())
+						.trim());
+		return true;
+	}
+
 	// @Scheduled(fixedDelay = 50000)
 	@Scheduled(cron = "${scheduler-time}")
 	private void fetchData() throws IOException, XPathExpressionException {
+		if (!loadConfig()) {
+			return;
+		}
 		logger.info("starting fetch of data");
-		try (Response response = OkHttpUtil.getSynchronous(apiUrl, getAuthCallback())) {
-			String body = response.body().string();
-			logger.debug("fetched data: " + body);
-			InputSource xml = new InputSource(new StringReader(body));
-			NodeList nodes = (NodeList) XPathFactory.newInstance()
-					.newXPath()
-					.compile("/DAS/devices/device/records/record/point")
-					.evaluate(xml, XPathConstants.NODESET);
-			List<DeviceAttribute> attributes = new ArrayList<>();
-			for (int i = 0; i < nodes.getLength(); i++) {
-				String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
-				if (fields.contains(name)) {
-					attributes.add(new DeviceAttribute(
-							name,
-							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
-							Float.parseFloat(nodes.item(i)
-									.getAttributes()
-									.getNamedItem("value")
-									.getNodeValue())));
+		for (Server server : servers.getServers()) {
+			try (Response response = OkHttpUtil.getSynchronous(server.getAddress(), getAuthCallback())) {
+				String body = response.body().string();
+				logger.debug("fetched data: " + body);
+				InputSource xml = new InputSource(new StringReader(body));
+				NodeList nodes = (NodeList) XPathFactory.newInstance()
+						.newXPath()
+						.compile("/DAS/devices/device/records/record/point")
+						.evaluate(xml, XPathConstants.NODESET);
+				List<DeviceAttribute> attributes = new ArrayList<>();
+				for (int i = 0; i < nodes.getLength(); i++) {
+					String name =
+							nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
+					if (fields.contains(name)) {
+						attributes.add(new DeviceAttribute(
+								name,
+								nodes.item(i)
+										.getAttributes()
+										.getNamedItem("units")
+										.getNodeValue(),
+								Float.parseFloat(nodes.item(i)
+										.getAttributes()
+										.getNamedItem("value")
+										.getNodeValue())));
+					}
 				}
+				attributes.add(new DeviceAttribute("site", "", server.getSite()));
+				attributes.add(new DeviceAttribute("device-name", "", server.getName()));
+				logger.debug("sending to elastic component");
+				elastic.logData(server.getName(), attributes);
+				logger.info("end of fetch data");
 			}
-			attributes.add(new DeviceAttribute("site", "", site));
-			attributes.add(new DeviceAttribute("device-name", "", name));
-			logger.debug("sending to elastic component");
-			elastic.logData(name, attributes);
-			logger.info("end of fetch data");
 		}
 	}
 

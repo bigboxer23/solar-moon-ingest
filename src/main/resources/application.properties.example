@@ -1,6 +1,3 @@
-generation-meter-name=Real Meter Name
-generation-meter-site=Real Site Name
-generation-meter-url=http://xxx.xxx.xx.xxx/setup/devicexml.cgi?ADDRESS=xx&TYPE=DATA
 generation-meter-user=xxxxxx
 generation-meter-pass=xxxxxx
 generation-meter-fields=Total Energy Consumption,Total Real Power,Average Current,Average Voltage (L-N),Total (System) Power Factor
