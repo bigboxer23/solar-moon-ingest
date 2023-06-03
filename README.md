@@ -5,9 +5,11 @@ further analytics and dashboards.  It supports limiting the total fields we plac
 site for the device.
 
 # Adding devices
+
 There needs to be a servers.json file added which is located next to the current working path this is run on (`user.dir`).
 
-An example of this file's content should look like: 
+An example of this file's content should look like:
+
 ```{
 {
   "servers": [
@@ -18,3 +20,5 @@ An example of this file's content should look like:
     }
     ]
 }
+```
+
