@@ -1,6 +1,6 @@
 package com.bigboxer23.generationMeter;
 
-import com.bigboxer23.generationMeter.data.DeviceAttribute;
+import com.bigboxer23.generationMeter.data.Device;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Date;
@@ -31,14 +31,17 @@ public class ElasticComponent {
 
 	private static final String TYPE = "Status";
 
-	public void logData(String deviceName, List<DeviceAttribute> devices) {
+	public void logData(List<Device> devices) {
 		logger.debug("logData");
+		Date date = new Date();
 		BulkRequest bulkRequest = new BulkRequest();
-		Map<String, Object> document = new HashMap<>();
-		devices.forEach((device) -> document.put(device.getName(), device.getValue()));
-		document.put("@timestamp", new Date());
-		bulkRequest.add(
-				new IndexRequest(INDEX_NAME, TYPE, deviceName + ":" + System.currentTimeMillis()).source(document));
+		devices.forEach(device -> {
+			Map<String, Object> document = new HashMap<>();
+			device.getAttributes().forEach((name, attr) -> document.put(attr.getName(), attr.getValue()));
+			document.put("@timestamp", date);
+			bulkRequest.add(new IndexRequest(INDEX_NAME, TYPE, device.getName() + ":" + System.currentTimeMillis())
+					.source(document));
+		});
 		if (bulkRequest.numberOfActions() > 0) {
 			logger.debug("Sending Request to elastic");
 			try {

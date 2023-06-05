@@ -7,4 +7,6 @@ import lombok.Data;
 @Data
 public class Servers {
 	private List<Server> servers;
+
+	private List<Server> sites;
 }
