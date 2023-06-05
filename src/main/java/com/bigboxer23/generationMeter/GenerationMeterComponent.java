@@ -130,7 +130,7 @@ public class GenerationMeterComponent {
 					.orElse(-1f);
 			if (totalPower > -1) {
 				logger.debug("adding virtual device " + site.getSite());
-				Device device = new Device(site.getSite(), site.getName());
+				Device device = new Device(site.getName(), site.getName());
 				device.setEnergyConsumed(totalPower);
 				device.setIsVirtual();
 				sites.add(device);
