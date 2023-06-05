@@ -59,9 +59,12 @@ public class GenerationMeterComponent {
 	}
 
 	private boolean loadConfig() throws IOException {
+		logger.info("reading config file");
 		File config = new File(System.getProperty("user.dir") + File.separator + "servers.json");
 		if (!config.exists()) {
-			logger.warn("no servers.json file exists, not doing anything");
+			logger.warn("no "
+					+ (System.getProperty("user.dir") + File.separator + "servers.json")
+					+ " file exists, not doing anything");
 			return false;
 		}
 		servers = moshi.adapter(Servers.class)
@@ -76,6 +79,7 @@ public class GenerationMeterComponent {
 		if (!loadConfig()) {
 			return;
 		}
+		Date fetchDate = new Date();
 		logger.info("starting fetch of data");
 		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
@@ -107,7 +111,7 @@ public class GenerationMeterComponent {
 		}
 		fillInVirtualDevices(devices);
 		logger.debug("sending to elastic component");
-		elastic.logData(devices);
+		elastic.logData(fetchDate, devices);
 		logger.info("end of fetch data");
 	}
 

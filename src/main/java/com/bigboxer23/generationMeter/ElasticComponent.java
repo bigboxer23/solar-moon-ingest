@@ -31,14 +31,13 @@ public class ElasticComponent {
 
 	private static final String TYPE = "Status";
 
-	public void logData(List<Device> devices) {
+	public void logData(Date fetchDate, List<Device> devices) {
 		logger.debug("logData");
-		Date date = new Date();
 		BulkRequest bulkRequest = new BulkRequest();
 		devices.forEach(device -> {
 			Map<String, Object> document = new HashMap<>();
 			device.getAttributes().forEach((name, attr) -> document.put(attr.getName(), attr.getValue()));
-			document.put("@timestamp", date);
+			document.put("@timestamp", fetchDate);
 			bulkRequest.add(new IndexRequest(INDEX_NAME, TYPE, device.getName() + ":" + System.currentTimeMillis())
 					.source(document));
 		});
