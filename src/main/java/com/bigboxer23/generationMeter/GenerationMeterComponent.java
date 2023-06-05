@@ -73,7 +73,7 @@ public class GenerationMeterComponent {
 		return true;
 	}
 
-	// @Scheduled(fixedDelay = 50000)
+	// @Scheduled(fixedDelay = 5000)
 	@Scheduled(cron = "${scheduler-time}")
 	private void fetchData() throws IOException, XPathExpressionException {
 		if (!loadConfig()) {
@@ -122,18 +122,27 @@ public class GenerationMeterComponent {
 		logger.debug("starting to fill in virtual devices");
 		List<Device> sites = new ArrayList<>();
 		servers.getSites().forEach(site -> {
-			float totalPower = devices.stream()
+			logger.debug("adding virtual device " + site.getSite());
+			Device siteDevice = new Device(site.getName(), site.getName());
+			siteDevice.setIsVirtual();
+			sites.add(siteDevice);
+			float totalEnergyConsumed = devices.stream()
 					.filter(device -> device.getSite().equals(site.getName()))
 					.map(Device::getEnergyConsumed)
 					.filter(energy -> energy >= 0)
 					.reduce(Float::sum)
 					.orElse(-1f);
-			if (totalPower > -1) {
-				logger.debug("adding virtual device " + site.getSite());
-				Device device = new Device(site.getName(), site.getName());
-				device.setEnergyConsumed(totalPower);
-				device.setIsVirtual();
-				sites.add(device);
+			if (totalEnergyConsumed > -1) {
+				siteDevice.setEnergyConsumed(totalEnergyConsumed);
+			}
+			float totalRealPower = devices.stream()
+					.filter(device -> device.getSite().equals(site.getName()))
+					.map(Device::getTotalRealPower)
+					.filter(energy -> energy >= 0)
+					.reduce(Float::sum)
+					.orElse(-1f);
+			if (totalRealPower > -1) {
+				siteDevice.setTotalRealPower(totalRealPower);
 			}
 		});
 		devices.addAll(sites);
