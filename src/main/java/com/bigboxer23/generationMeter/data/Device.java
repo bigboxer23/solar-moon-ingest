@@ -10,6 +10,7 @@ import lombok.Data;
 public class Device {
 	public static final String TOTAL_ENG_CONS = "Total Energy Consumption";
 	public static final String ENG_CONS = "Energy Consumed";
+	public static final String TOTAL_REAL_POWER = "Total Real Power";
 
 	private Map<String, DeviceAttribute> attributes;
 
@@ -21,6 +22,16 @@ public class Device {
 
 	public void addAttribute(DeviceAttribute attr) {
 		attributes.put(attr.getName(), attr);
+	}
+
+	public float getTotalRealPower() {
+		return (Float) Optional.ofNullable(attributes.get(TOTAL_REAL_POWER))
+				.map(DeviceAttribute::getValue)
+				.orElse(-1f);
+	}
+
+	public void setTotalRealPower(float totalRealPower) {
+		addAttribute(new DeviceAttribute(TOTAL_REAL_POWER, getTotalEnergyConsumedUnit(), totalRealPower));
 	}
 
 	public float getTotalEnergyConsumed() {
@@ -36,7 +47,7 @@ public class Device {
 	}
 
 	public void setEnergyConsumed(float energyConsumed) {
-		addAttribute(new DeviceAttribute(Device.ENG_CONS, getTotalEnergyConsumedUnit(), energyConsumed));
+		addAttribute(new DeviceAttribute(ENG_CONS, getTotalEnergyConsumedUnit(), energyConsumed));
 	}
 
 	public void setIsVirtual() {
