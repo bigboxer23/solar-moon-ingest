@@ -112,10 +112,13 @@ public class GenerationMeterComponent {
 	}
 
 	private void fillInVirtualDevices(List<Device> devices) {
+		if (servers.getSites() == null) {
+			return;
+		}
 		logger.debug("starting to fill in virtual devices");
 		List<Device> sites = new ArrayList<>();
 		servers.getSites().forEach(site -> {
-			Float totalPower = devices.stream()
+			float totalPower = devices.stream()
 					.filter(device -> device.getSite().equals(site.getName()))
 					.map(Device::getEnergyConsumed)
 					.filter(energy -> energy >= 0)
