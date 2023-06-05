@@ -1,5 +1,6 @@
 package com.bigboxer23.generationMeter;
 
+import com.bigboxer23.generationMeter.data.Device;
 import com.bigboxer23.generationMeter.data.DeviceAttribute;
 import com.bigboxer23.generationMeter.data.Server;
 import com.bigboxer23.generationMeter.data.Servers;
@@ -28,7 +29,6 @@ import org.xml.sax.InputSource;
 /** Class to read data from the generation meter web interface */
 @Component
 public class GenerationMeterComponent {
-
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
 	@Value("${generation-meter-user}")
@@ -77,40 +77,62 @@ public class GenerationMeterComponent {
 			return;
 		}
 		logger.info("starting fetch of data");
+		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
+			String body = "";
 			try (Response response = OkHttpUtil.getSynchronous(server.getAddress(), getAuthCallback())) {
-				String body = response.body().string();
+				body = response.body().string();
 				logger.debug("fetched data: " + body);
-				InputSource xml = new InputSource(new StringReader(body));
-				NodeList nodes = (NodeList) XPathFactory.newInstance()
-						.newXPath()
-						.compile("/DAS/devices/device/records/record/point")
-						.evaluate(xml, XPathConstants.NODESET);
-				List<DeviceAttribute> attributes = new ArrayList<>();
-				for (int i = 0; i < nodes.getLength(); i++) {
-					String name =
-							nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
-					if (fields.contains(name)) {
-						attributes.add(new DeviceAttribute(
-								name,
-								nodes.item(i)
-										.getAttributes()
-										.getNamedItem("units")
-										.getNodeValue(),
-								Float.parseFloat(nodes.item(i)
-										.getAttributes()
-										.getNamedItem("value")
-										.getNodeValue())));
-					}
-				}
-				attributes.add(new DeviceAttribute("site", "", server.getSite()));
-				attributes.add(new DeviceAttribute("device-name", "", server.getName()));
-				calculateTotalEnergyConsumed(server.getName(), attributes);
-				logger.debug("sending to elastic component");
-				elastic.logData(server.getName(), attributes);
-				logger.info("end of fetch data");
 			}
+			InputSource xml = new InputSource(new StringReader(body));
+			NodeList nodes = (NodeList) XPathFactory.newInstance()
+					.newXPath()
+					.compile("/DAS/devices/device/records/record/point")
+					.evaluate(xml, XPathConstants.NODESET);
+			Device device = new Device(server.getSite(), server.getName());
+			for (int i = 0; i < nodes.getLength(); i++) {
+				String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
+				if (fields.contains(name)) {
+					device.addAttribute(new DeviceAttribute(
+							name,
+							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
+							Float.parseFloat(nodes.item(i)
+									.getAttributes()
+									.getNamedItem("value")
+									.getNodeValue())));
+				}
+			}
+			calculateTotalEnergyConsumed(device);
+			devices.add(device);
 		}
+		fillInVirtualDevices(devices);
+		logger.debug("sending to elastic component");
+		elastic.logData(devices);
+		logger.info("end of fetch data");
+	}
+
+	private void fillInVirtualDevices(List<Device> devices) {
+		if (servers.getSites() == null) {
+			return;
+		}
+		logger.debug("starting to fill in virtual devices");
+		List<Device> sites = new ArrayList<>();
+		servers.getSites().forEach(site -> {
+			float totalPower = devices.stream()
+					.filter(device -> device.getSite().equals(site.getName()))
+					.map(Device::getEnergyConsumed)
+					.filter(energy -> energy >= 0)
+					.reduce(Float::sum)
+					.orElse(-1f);
+			if (totalPower > -1) {
+				logger.debug("adding virtual device " + site.getSite());
+				Device device = new Device(site.getSite(), site.getName());
+				device.setEnergyConsumed(totalPower);
+				device.setIsVirtual();
+				sites.add(device);
+			}
+		});
+		devices.addAll(sites);
 	}
 
 	/**
@@ -120,22 +142,17 @@ public class GenerationMeterComponent {
 	 * @param serverName
 	 * @param attr
 	 */
-	private void calculateTotalEnergyConsumed(String serverName, List<DeviceAttribute> attr) {
-		logger.debug("calculating total energy consumed.");
-		Optional<DeviceAttribute> totalEnergyConsumption = attr.stream()
-				.filter(device -> device.getName().equals("Total Energy Consumption"))
-				.findAny();
-		if (totalEnergyConsumption.isEmpty()) {
+	private void calculateTotalEnergyConsumed(Device device) {
+		logger.debug("calculating total energy consumed. " + device.getName());
+		float totalEnergyConsumption = device.getTotalEnergyConsumed();
+		if (totalEnergyConsumption < 0) {
 			return;
 		}
-		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.get(serverName);
+		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.get(device.getName());
 		if (previousTotalEnergyConsumed != null) {
-			float energyConsumed = (Float) totalEnergyConsumption.get().getValue() - previousTotalEnergyConsumed;
-			attr.add(new DeviceAttribute(
-					"energy-consumption", totalEnergyConsumption.get().getUnit(), energyConsumed));
+			device.setEnergyConsumed(totalEnergyConsumption - previousTotalEnergyConsumed);
 		}
-		deviceTotalEnergyConsumed.put(
-				serverName, (Float) totalEnergyConsumption.get().getValue());
+		deviceTotalEnergyConsumed.put(device.getName(), totalEnergyConsumption);
 	}
 
 	private RequestBuilderCallback getAuthCallback() {
