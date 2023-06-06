@@ -32,7 +32,7 @@ public class ElasticComponent {
 	private static final String TYPE = "Status";
 
 	public void logData(Date fetchDate, List<Device> devices) {
-		logger.debug("logData");
+		logger.debug("sending to elastic component");
 		BulkRequest bulkRequest = new BulkRequest();
 		devices.forEach(device -> {
 			Map<String, Object> document = new HashMap<>();

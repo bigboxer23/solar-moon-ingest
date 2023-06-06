@@ -45,10 +45,13 @@ public class GenerationMeterComponent {
 
 	private Servers servers;
 
+	private AlarmComponent alarmComponent;
+
 	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
 
-	public GenerationMeterComponent(ElasticComponent elastic, Environment env) {
+	public GenerationMeterComponent(ElasticComponent elastic, AlarmComponent alarmComponent, Environment env) {
 		this.elastic = elastic;
+		this.alarmComponent = alarmComponent;
 		String fieldString = env.getProperty("generation-meter-fields");
 		if (fieldString != null) {
 			fields = Arrays.stream(fieldString.split(","))
@@ -110,8 +113,8 @@ public class GenerationMeterComponent {
 			devices.add(device);
 		}
 		fillInVirtualDevices(devices);
-		logger.debug("sending to elastic component");
 		elastic.logData(fetchDate, devices);
+		alarmComponent.fireAlarms(devices);
 		logger.info("end of fetch data");
 	}
 
