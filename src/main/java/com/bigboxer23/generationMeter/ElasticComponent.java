@@ -21,13 +21,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ElasticComponent {
 
-	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
+	protected static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
 	@Value("${elastic.url}")
 	private String elasticUrl;
 
 	private RestHighLevelClient client;
-	private static final String INDEX_NAME = "generation-meter";
+	protected static final String INDEX_NAME = "generation-meter";
 
 	private static final String TYPE = "Status";
 

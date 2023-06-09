@@ -3,3 +3,11 @@ generation-meter-pass=xxxxxx
 generation-meter-fields=Total Energy Consumption,Total Real Power,Average Current,Average Voltage (L-N),Total (System) Power Factor
 scheduler-time=0 */15 * * * ?
 elastic.url=http://xxx.xxx.xxx.xxx:9200
+opensearch.url=https://xxxxx.xxx
+opensearch.user=xxxxx
+opensearch.pw=xxxxxxxx
+server.port:8084
+host=xxxxxxxxx
+user=xxxxxxx
+logbackserver=xxxxxx:5671
+openweathermap.api=xxxxxxxxxx
