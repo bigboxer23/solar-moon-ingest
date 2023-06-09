@@ -19,6 +19,7 @@ import okhttp3.Response;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,6 +42,8 @@ public class GenerationMeterComponent {
 
 	private final ElasticComponent elastic;
 
+	private final OpenSearchComponent openSearch;
+
 	private Set<String> fields = new HashSet<>();
 
 	private Servers servers;
@@ -49,7 +52,12 @@ public class GenerationMeterComponent {
 
 	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
 
-	public GenerationMeterComponent(ElasticComponent elastic, AlarmComponent alarmComponent, Environment env) {
+	public GenerationMeterComponent(
+			OpenSearchComponent openSearch,
+			@Qualifier("elasticComponent") ElasticComponent elastic,
+			AlarmComponent alarmComponent,
+			Environment env) {
+		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
 		String fieldString = env.getProperty("generation-meter-fields");
@@ -113,7 +121,7 @@ public class GenerationMeterComponent {
 			devices.add(device);
 		}
 		fillInVirtualDevices(devices);
-		elastic.logData(fetchDate, devices);
+		openSearch.logData(fetchDate, devices);
 		alarmComponent.fireAlarms(devices);
 		logger.info("end of fetch data");
 	}

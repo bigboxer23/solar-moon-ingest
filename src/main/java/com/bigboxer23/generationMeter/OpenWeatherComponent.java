@@ -55,7 +55,9 @@ public class OpenWeatherComponent {
 				MessageFormat.format(kOpenWeatherMapUrl, latitude, longitude, openWeatherMapAPIKey), null)) {
 			String body = response.body().string();
 			logger.debug("weather body " + body);
-			return Optional.ofNullable(moshi.adapter(WeatherData.class).fromJson(body)).map(WeatherData::getSys).orElse(null);
+			return Optional.ofNullable(moshi.adapter(WeatherData.class).fromJson(body))
+					.map(WeatherData::getSys)
+					.orElse(null);
 		}
 	}
 }
