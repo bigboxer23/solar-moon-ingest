@@ -2,10 +2,9 @@ package com.bigboxer23.generationMeter;
 
 import com.bigboxer23.generationMeter.data.Device;
 import com.bigboxer23.generationMeter.data.Location;
+import com.bigboxer23.generationMeter.data.WeatherSystemData;
 import java.io.IOException;
 import java.util.List;
-
-import com.bigboxer23.generationMeter.data.WeatherSystemData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
