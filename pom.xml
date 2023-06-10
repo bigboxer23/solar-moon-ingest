@@ -151,37 +151,42 @@
           <target>17</target>
         </configuration>
       </plugin>
-
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
-        <dependencies>
-          <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.55</version>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant-jsch</artifactId>
-            <version>1.10.13</version>
-          </dependency>
-
-        </dependencies>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.0.0</version>
         <executions>
           <execution>
-            <id>scp-to-remote</id>
+            <id>Moving jar to server</id>
             <goals>
-              <goal>run</goal>
+              <goal>exec</goal>
             </goals>
             <phase>package</phase>
             <configuration>
-              <target>
-                <scp file="${project.basedir}/target/generation-meter-to-elastic-1.0.jar" keyfile="${user.home}/.ssh/id_rsa" passphrase="" todir="pi@${host}:/home/pi/com/bigboxer23/generation-meter-to-elastic/1.0" trust="true"/>
-                <sshexec command="sudo pkill -f 'java.*generation-meter-to-elastic-1.0*'" host="${host}" keyfile="${user.home}/.ssh/id_rsa" trust="true" username="pi"/>
-                <sshexec command="cd /home/pi/com/bigboxer23/generation-meter-to-elastic/1.0/ ;nohup java -jar /home/pi/com/bigboxer23/generation-meter-to-elastic/1.0/generation-meter-to-elastic-1.0.jar &amp;" host="${host}" keyfile="${user.home}/.ssh/id_rsa" trust="true" username="pi"/>
-              </target>
+              <executable>scp</executable>
+              <commandlineArgs>-i ${identity_file} ${project.basedir}/target/generation-meter-to-elastic-1.0.jar ${user}@${host}:~/</commandlineArgs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>Killing existing running app</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <executable>ssh</executable>
+              <commandlineArgs>-i ${identity_file} ${user}@${host} sudo pkill -f 'java.*generation-meter-to-elastic-1.0*'</commandlineArgs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>Launching app</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <executable>ssh</executable>
+              <commandlineArgs>-i ${identity_file} ${user}@${host} nohup java -jar ~/generation-meter-to-elastic-1.0.jar &amp;</commandlineArgs>
             </configuration>
           </execution>
         </executions>
