@@ -1,3 +1,5 @@
+[![CodeQL](https://github.com/bigboxer23/Generation-Meter-To-Elastic/actions/workflows/codeQL.yml/badge.svg)](https://github.com/bigboxer23/Generation-Meter-To-Elastic/actions/workflows/codeQL.yml)
+
 # Generation-Meter-To-Elastic
 
 This project is for collecting data from an Elkor Watts On Meter and stashing it into an elastic search cluster for
