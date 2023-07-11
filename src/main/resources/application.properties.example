@@ -11,3 +11,4 @@ host=xxxxxxxxx
 user=xxxxxxx
 logbackserver=xxxxxx:5671
 openweathermap.api=xxxxxxxxxx
+test=xxx
