@@ -1,0 +1,9 @@
+[Unit]
+Description=service to collect meter information and store in elastic/opensearch database
+After=multi-user.target
+[Service]
+WorkingDirectory=/home/ec2-user
+ExecStart=java -jar ./generation-meter-to-elastic-1.0.jar
+User=${user}
+[Install]
+WantedBy=multi-user.target
