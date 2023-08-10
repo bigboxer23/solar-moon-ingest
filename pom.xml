@@ -175,18 +175,7 @@
             <phase>package</phase>
             <configuration>
               <executable>ssh</executable>
-              <commandlineArgs>-i ${identity_file} ${user}@${host} sudo pkill -f 'java.*generation-meter-to-elastic-1.0*'</commandlineArgs>
-            </configuration>
-          </execution>
-          <execution>
-            <id>Launching app</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>package</phase>
-            <configuration>
-              <executable>ssh</executable>
-              <commandlineArgs>-i ${identity_file} ${user}@${host} nohup java -jar ~/generation-meter-to-elastic-1.0.jar &amp;</commandlineArgs>
+              <commandlineArgs>-i ${identity_file} ${user}@${host} sudo systemctl restart generation-meter.service'</commandlineArgs>
             </configuration>
           </execution>
         </executions>
