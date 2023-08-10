@@ -4,8 +4,7 @@ import com.bigboxer23.generationMeter.data.Device;
 import com.bigboxer23.generationMeter.data.DeviceAttribute;
 import com.bigboxer23.generationMeter.data.OpenSearchDTO;
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -14,8 +13,14 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.FieldSort;
+import org.opensearch.client.opensearch._types.SortOptions;
+import org.opensearch.client.opensearch._types.SortOrder;
+import org.opensearch.client.opensearch._types.query_dsl.MatchPhraseQuery;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkResponse;
+import org.opensearch.client.opensearch.core.SearchRequest;
+import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.core.bulk.BulkOperation;
 import org.opensearch.client.opensearch.core.bulk.IndexOperation;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
@@ -25,6 +30,9 @@ import org.springframework.stereotype.Component;
 /** */
 @Component
 public class OpenSearchComponent extends ElasticComponent {
+
+	public static final String TIMESTAMP = "@timestamp";
+
 	private OpenSearchClient client;
 
 	@Value("${opensearch.url}")
@@ -40,7 +48,7 @@ public class OpenSearchComponent extends ElasticComponent {
 		logger.debug("sending to opensearch component");
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder().index(INDEX_NAME);
 		devices.forEach(device -> {
-			device.addAttribute(new DeviceAttribute("@timestamp", null, fetchDate));
+			device.addAttribute(new DeviceAttribute(TIMESTAMP, null, fetchDate));
 			bulkRequest.operations(new BulkOperation.Builder()
 					.index(new IndexOperation.Builder<OpenSearchDTO>()
 							.id(device.getName() + ":" + System.currentTimeMillis())
@@ -56,6 +64,45 @@ public class OpenSearchComponent extends ElasticComponent {
 			}
 		} catch (IOException theE) {
 			logger.error("logStatusEvent:", theE);
+		}
+	}
+
+	public Float getTotalEnergyConsumed(Device device) {
+		try {
+			MatchPhraseQuery query = new MatchPhraseQuery.Builder()
+					.field(Device.DEVICE_NAME)
+					.query(device.getName())
+					.build();
+			SearchRequest request = new SearchRequest.Builder()
+					.index(Collections.singletonList(INDEX_NAME))
+					.query(query._toQuery())
+					.sort(new SortOptions.Builder()
+							.field(new FieldSort.Builder()
+									.field(TIMESTAMP)
+									.order(SortOrder.Desc)
+									.build())
+							.build())
+					.size(1)
+					.build();
+			SearchResponse<Map> response = getClient().search(request, Map.class);
+			if (response.hits().hits().isEmpty()) {
+				logger.warn("couldn't find previous value for " + device.getName());
+				return null;
+			}
+			Map<String, Object> fields = response.hits().hits().get(0).source();
+			if (fields == null) {
+				logger.warn("No fields associated with result for " + device.getName());
+				return null;
+			}
+			return Optional.ofNullable((Double) fields.get(Device.TOTAL_ENG_CONS))
+					.map(Double::floatValue)
+					.orElseGet(() -> {
+						logger.warn("Unexpected value type for " + device.getName());
+						return null;
+					});
+		} catch (IOException e) {
+			logger.error("getTotalEnergyConsumed:", e);
+			return null;
 		}
 	}
 

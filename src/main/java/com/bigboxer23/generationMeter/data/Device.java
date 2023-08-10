@@ -11,13 +11,14 @@ public class Device {
 	public static final String TOTAL_ENG_CONS = "Total Energy Consumption";
 	public static final String ENG_CONS = "Energy Consumed";
 	public static final String TOTAL_REAL_POWER = "Total Real Power";
+	public static final String DEVICE_NAME = "device-name";
 
 	private Map<String, DeviceAttribute> attributes;
 
 	public Device(String site, String name) {
 		attributes = new HashMap<>();
 		attributes.put("site", new DeviceAttribute("site", "", site));
-		attributes.put("device-name", new DeviceAttribute("device-name", "", name));
+		attributes.put(DEVICE_NAME, new DeviceAttribute(DEVICE_NAME, "", name));
 	}
 
 	public void addAttribute(DeviceAttribute attr) {

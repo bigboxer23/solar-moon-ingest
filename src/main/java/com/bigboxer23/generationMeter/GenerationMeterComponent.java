@@ -172,7 +172,8 @@ public class GenerationMeterComponent {
 		if (totalEnergyConsumption < 0) {
 			return;
 		}
-		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.get(device.getName());
+		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.computeIfAbsent(
+				device.getName(), name -> openSearch.getTotalEnergyConsumed(device));
 		if (previousTotalEnergyConsumed != null) {
 			device.setEnergyConsumed(totalEnergyConsumption - previousTotalEnergyConsumed);
 		}
