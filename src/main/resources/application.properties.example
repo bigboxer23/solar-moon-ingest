@@ -10,4 +10,5 @@ server.port:8084
 host=xxxxxxxxx
 user=xxxxxxx
 logbackserver=xxxxxx:5671
+log_file=/User/home/generation-meter.log
 openweathermap.api=xxxxxxxxxx
