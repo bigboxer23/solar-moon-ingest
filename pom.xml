@@ -175,7 +175,7 @@
             <phase>package</phase>
             <configuration>
               <executable>ssh</executable>
-              <commandlineArgs>-i ${identity_file} ${user}@${host} sudo systemctl restart generation-meter.service'</commandlineArgs>
+              <commandlineArgs>-i ${identity_file} ${user}@${host} sudo systemctl restart generation-meter.service</commandlineArgs>
             </configuration>
           </execution>
         </executions>
