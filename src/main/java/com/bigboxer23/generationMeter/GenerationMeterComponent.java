@@ -48,6 +48,8 @@ public class GenerationMeterComponent {
 
 	private Servers servers;
 
+	private long serversLastMod = -1;
+
 	private AlarmComponent alarmComponent;
 
 	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
@@ -69,25 +71,33 @@ public class GenerationMeterComponent {
 		}
 	}
 
-	private boolean loadConfig() throws IOException {
-		logger.info("reading config file");
+	protected boolean loadConfig() throws IOException {
+		logger.debug("reading config file");
 		File config = new File(System.getProperty("user.dir") + File.separator + "servers.json");
 		if (!config.exists()) {
 			logger.warn("no "
 					+ (System.getProperty("user.dir") + File.separator + "servers.json")
 					+ " file exists, not doing anything");
+			servers = null;
+			serversLastMod = -1;
 			return false;
 		}
-		servers = moshi.adapter(Servers.class)
-				.fromJson(FileUtils.readFileToString(config, Charset.defaultCharset())
-						.trim());
-		return true;
+		if (servers == null || serversLastMod < config.lastModified()) {
+			logger.info("Config changed, reading config from file");
+			servers = moshi.adapter(Servers.class)
+					.fromJson(FileUtils.readFileToString(config, Charset.defaultCharset())
+							.trim());
+			serversLastMod = config.lastModified();
+			return true;
+		}
+		return false;
 	}
 
 	// @Scheduled(fixedDelay = 5000)
 	@Scheduled(cron = "${scheduler-time}")
 	private void fetchData() throws IOException, XPathExpressionException {
-		if (!loadConfig()) {
+		loadConfig();
+		if (servers == null) {
 			return;
 		}
 		Date fetchDate = new Date();
