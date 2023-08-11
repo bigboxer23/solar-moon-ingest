@@ -105,7 +105,8 @@ public class OpenWeatherComponent {
 	}
 
 	public WeatherSystemData getSunriseSunsetFromCityStateCountry(String city, String state, int countryCode) {
-		Location location = getLatLongFromCity(city, state, countryCode);
-		return getSunriseSunset(location.getLat(), location.getLon());
+		return Optional.ofNullable(getLatLongFromCity(city, state, countryCode))
+				.map(location -> getSunriseSunset(location.getLat(), location.getLon()))
+				.orElse(null);
 	}
 }

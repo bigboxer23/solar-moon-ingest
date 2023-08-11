@@ -42,5 +42,8 @@ public class TestOpenWeatherComponent {
 		assertFalse(data.isFromCache());
 		data = component.getSunriseSunsetFromCityStateCountry("golden valley", "mn", 581);
 		assertTrue(data.isFromCache());
+		//invalid case
+		data = component.getSunriseSunsetFromCityStateCountry("golden valley2", "nv", 582);
+		assertNull(data);
 	}
 }
