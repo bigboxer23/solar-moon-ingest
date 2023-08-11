@@ -23,6 +23,8 @@ import org.opensearch.client.opensearch.core.SearchRequest;
 import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.core.bulk.BulkOperation;
 import org.opensearch.client.opensearch.core.bulk.IndexOperation;
+import org.opensearch.client.opensearch.core.search.SourceConfig;
+import org.opensearch.client.opensearch.core.search.SourceFilter;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -83,6 +85,11 @@ public class OpenSearchComponent extends ElasticComponent {
 									.build())
 							.build())
 					.size(1)
+					.source(new SourceConfig.Builder()
+							.filter(new SourceFilter.Builder()
+									.includes(Collections.singletonList(Device.TOTAL_ENG_CONS))
+									.build())
+							.build())
 					.build();
 			SearchResponse<Map> response = getClient().search(request, Map.class);
 			if (response.hits().hits().isEmpty()) {
