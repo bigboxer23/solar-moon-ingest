@@ -1,7 +1,6 @@
 package com.bigboxer23.generationMeter;
 
 import com.bigboxer23.generationMeter.data.Device;
-import com.bigboxer23.generationMeter.data.Location;
 import com.bigboxer23.generationMeter.data.WeatherSystemData;
 import java.io.IOException;
 import java.util.List;
@@ -24,8 +23,8 @@ public class AlarmComponent {
 	public void fireAlarms(List<Device> devices) throws IOException {
 		logger.debug("checking alarms");
 		// TODO: criteria for actually firing
-		Location location = openWeatherComponent.getLatLongFromCity("golden valley", "mn", 581);
-		WeatherSystemData sunriseSunset = openWeatherComponent.getSunriseSunset(location.getLat(), location.getLon());
+		WeatherSystemData sunriseSunset =
+				openWeatherComponent.getSunriseSunsetFromCityStateCountry("golden valley", "mn", 581);
 		logger.debug("sunrise/sunset " + sunriseSunset.getSunrise() + "," + sunriseSunset.getSunset());
 	}
 }
