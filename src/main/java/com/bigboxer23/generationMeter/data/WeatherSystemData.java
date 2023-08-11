@@ -8,4 +8,6 @@ public class WeatherSystemData {
 	private int sunrise;
 
 	private int sunset;
+
+	private boolean fromCache = false;
 }
