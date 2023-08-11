@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.bigboxer23.generationMeter.data.Location;
 import com.bigboxer23.generationMeter.data.WeatherSystemData;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -12,12 +15,14 @@ import org.springframework.test.context.ActiveProfiles;
 /** */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestOpenWeatherComponent {
 
 	@Autowired
 	private OpenWeatherComponent component;
 
 	@Test
+	@Order(1)
 	public void testGetLatLongFromCity() {
 		Location location = component.getLatLongFromCity("golden valley", "mn", 581);
 		assertNotNull(location);
