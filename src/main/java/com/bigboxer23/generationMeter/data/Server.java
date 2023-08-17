@@ -10,4 +10,10 @@ public class Server {
 	private String address;
 
 	private String site;
+
+	private String user;
+
+	private String password;
+
+	private String type;
 }
