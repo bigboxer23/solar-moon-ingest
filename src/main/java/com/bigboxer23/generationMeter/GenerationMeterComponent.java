@@ -20,7 +20,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -31,12 +30,6 @@ import org.xml.sax.InputSource;
 @Component
 public class GenerationMeterComponent {
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
-
-	@Value("${generation-meter-user}")
-	private String apiUser;
-
-	@Value("${generation-meter-pass}")
-	private String apiPass;
 
 	private final Moshi moshi = new Moshi.Builder().build();
 
@@ -104,36 +97,47 @@ public class GenerationMeterComponent {
 		logger.info("starting fetch of data");
 		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
-			String body = "";
-			try (Response response = OkHttpUtil.getSynchronous(server.getAddress(), getAuthCallback())) {
-				body = response.body().string();
-				logger.debug("fetched data: " + body);
-			}
-			InputSource xml = new InputSource(new StringReader(body));
-			NodeList nodes = (NodeList) XPathFactory.newInstance()
-					.newXPath()
-					.compile("/DAS/devices/device/records/record/point")
-					.evaluate(xml, XPathConstants.NODESET);
-			Device device = new Device(server.getSite(), server.getName());
-			for (int i = 0; i < nodes.getLength(); i++) {
-				String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
-				if (fields.contains(name)) {
-					device.addAttribute(new DeviceAttribute(
-							name,
-							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
-							Float.parseFloat(nodes.item(i)
-									.getAttributes()
-									.getNamedItem("value")
-									.getNodeValue())));
-				}
-			}
-			calculateTotalEnergyConsumed(device);
-			devices.add(device);
+			devices.add(getDeviceInformation(server));
 		}
 		fillInVirtualDevices(devices);
 		openSearch.logData(fetchDate, devices);
 		alarmComponent.fireAlarms(devices);
 		logger.info("end of fetch data");
+	}
+
+	public Device getDeviceInformation(Server server) throws XPathExpressionException, IOException {
+		if (server == null || server.getUser() == null || server.getPassword() == null) {
+			logger.warn("server or user or pw is null, cannot fetch data: " + server);
+			return null;
+		}
+		String body = "";
+		try (Response response = OkHttpUtil.getSynchronous(
+				server.getAddress(), getAuthCallback(server.getUser(), server.getPassword()))) {
+			body = response.body().string();
+			logger.debug("fetched data: " + body);
+		}
+		InputSource xml = new InputSource(new StringReader(body));
+		NodeList nodes = (NodeList) XPathFactory.newInstance()
+				.newXPath()
+				.compile("/DAS/devices/device/records/record/point")
+				.evaluate(xml, XPathConstants.NODESET);
+		Device device = new Device(server.getSite(), server.getName());
+		for (int i = 0; i < nodes.getLength(); i++) {
+			String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
+			if (fields.contains(name)) {
+				device.addAttribute(new DeviceAttribute(
+						name,
+						nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
+						Float.parseFloat(nodes.item(i)
+								.getAttributes()
+								.getNamedItem("value")
+								.getNodeValue())));
+			}
+		}
+		if (device.getName() != null) {
+			calculateTotalEnergyConsumed(device);
+		}
+		return device;
 	}
 
 	private void fillInVirtualDevices(List<Device> devices) {
@@ -190,7 +194,7 @@ public class GenerationMeterComponent {
 		deviceTotalEnergyConsumed.put(device.getName(), totalEnergyConsumption);
 	}
 
-	private RequestBuilderCallback getAuthCallback() {
-		return builder -> builder.addHeader("Authorization", Credentials.basic(apiUser, apiPass));
+	private RequestBuilderCallback getAuthCallback(String user, String pass) {
+		return builder -> builder.addHeader("Authorization", Credentials.basic(user, pass));
 	}
 }
