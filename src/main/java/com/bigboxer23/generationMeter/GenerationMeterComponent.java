@@ -28,7 +28,7 @@ import org.xml.sax.InputSource;
 
 /** Class to read data from the generation meter web interface */
 @Component
-public class GenerationMeterComponent {
+public class GenerationMeterComponent implements MeterConstants{
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
 	private final Moshi moshi = new Moshi.Builder().build();
@@ -123,15 +123,17 @@ public class GenerationMeterComponent {
 
 	public void handleDeviceBody(String body) throws XPathExpressionException {
 		if (servers == null) {
+			logger.error("servers not defined, not doing anything.");
 			return;
 		}
+		logger.debug("parsing device body: " + body);
 		InputSource xml = new InputSource(new StringReader(body));
 		NodeList nodes = (NodeList)
-				XPathFactory.newInstance().newXPath().compile("/DAS/mode").evaluate(xml, XPathConstants.NODESET);
-		if (nodes.getLength() > 0 && "LOGFILEUPLOAD".equals(nodes.item(0).getTextContent())) {
+				XPathFactory.newInstance().newXPath().compile(MODE_PATH).evaluate(xml, XPathConstants.NODESET);
+		if (nodes.getLength() > 0 && FILE_DATA.equals(nodes.item(0).getTextContent())) {
 			xml = new InputSource(new StringReader(body));
 			nodes = (NodeList)
-					XPathFactory.newInstance().newXPath().compile("/DAS/name").evaluate(xml, XPathConstants.NODESET);
+					XPathFactory.newInstance().newXPath().compile(DEVICE_NAME_PATH).evaluate(xml, XPathConstants.NODESET);
 			if (nodes.getLength() > 0) {
 				Optional.ofNullable(findServerFromDeviceName(nodes.item(0).getTextContent()))
 						.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
@@ -142,8 +144,10 @@ public class GenerationMeterComponent {
 
 	private Server findServerFromDeviceName(String deviceName) {
 		if (servers == null || deviceName == null || deviceName.isBlank()) {
+			logger.warn("server or device is null, can't find");
 			return null;
 		}
+		logger.debug("finding server from device name " + deviceName);
 		return servers.getServers().stream()
 				.filter(server -> deviceName.equals(server.getDeviceName()))
 				.findAny()
@@ -152,10 +156,11 @@ public class GenerationMeterComponent {
 
 	private Device parseDeviceInformation(String body, String site, String name) {
 		try {
+			logger.debug("parsing device info " + site + ":" + name + "\n" + body);
 			InputSource xml = new InputSource(new StringReader(body));
 			NodeList nodes = (NodeList) XPathFactory.newInstance()
 					.newXPath()
-					.compile("/DAS/devices/device/records/record/point")
+					.compile(POINT_PATH)
 					.evaluate(xml, XPathConstants.NODESET);
 			Device device = new Device(site, name);
 			for (int i = 0; i < nodes.getLength(); i++) {

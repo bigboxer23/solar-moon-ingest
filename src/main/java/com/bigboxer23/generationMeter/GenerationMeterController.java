@@ -28,10 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** */
 @RestController
 @Tag(name = "Generation Meter Controller", description = "Various APIs available for interacting with the meters.")
-public class GenerationMeterController {
-
-	public static final String XML_SUCCESS_RESPONSE =
-			"<?xml version=\"1.0\" encoding=\"UTF-8\" ?><DAS><result>SUCCESS</result></DAS>";
+public class GenerationMeterController implements MeterConstants{
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterController.class);
 
@@ -82,11 +79,14 @@ public class GenerationMeterController {
 			summary = "Endpoint to post xml content to body for parsing into device data",
 			requestBody = @RequestBody(description = "XML string content to parse"))
 	@PostMapping(value = "/upload")
-	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest)
-			throws IOException, XPathExpressionException {
+	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
+		logger.info("received uploaded data");
 		servletRequest.getHeaderNames();
 		try (BufferedReader reader = servletRequest.getReader()) {
 			component.handleDeviceBody(IOUtils.toString(reader));
+		} catch (XPathExpressionException | IOException e) {
+			logger.error("uploadXmlContent: " + servletRequest.getRemoteAddr(), e);
+			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
 		}
 		HttpHeaders httpHeaders = new HttpHeaders();
 		httpHeaders.setContentType(MediaType.TEXT_XML);
