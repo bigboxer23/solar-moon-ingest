@@ -4,23 +4,31 @@ import com.bigboxer23.generationMeter.data.Server;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import javax.xml.xpath.XPathExpressionException;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** */
 @RestController
 @Tag(name = "Generation Meter Controller", description = "Various APIs available for interacting with the meters.")
-public class GenerationMeterController {
+public class GenerationMeterController implements MeterConstants{
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterController.class);
 
@@ -65,5 +73,23 @@ public class GenerationMeterController {
 			logger.error("validateDeviceInformation:cannot get information for server: " + url, e);
 		}
 		return false;
+	}
+
+	@Operation(
+			summary = "Endpoint to post xml content to body for parsing into device data",
+			requestBody = @RequestBody(description = "XML string content to parse"))
+	@PostMapping(value = "/upload")
+	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
+		logger.info("received uploaded data");
+		servletRequest.getHeaderNames();
+		try (BufferedReader reader = servletRequest.getReader()) {
+			component.handleDeviceBody(IOUtils.toString(reader));
+		} catch (XPathExpressionException | IOException e) {
+			logger.error("uploadXmlContent: " + servletRequest.getRemoteAddr(), e);
+			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
+		}
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setContentType(MediaType.TEXT_XML);
+		return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 	}
 }
