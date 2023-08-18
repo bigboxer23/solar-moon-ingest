@@ -16,4 +16,6 @@ public class Server {
 	private String password;
 
 	private String type;
+
+	private String deviceName;
 }

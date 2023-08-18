@@ -51,7 +51,8 @@ public class GenerationMeterComponent {
 			OpenSearchComponent openSearch,
 			@Qualifier("elasticComponent") ElasticComponent elastic,
 			AlarmComponent alarmComponent,
-			Environment env) {
+			Environment env)
+			throws IOException {
 		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
@@ -62,6 +63,7 @@ public class GenerationMeterComponent {
 					.filter(field -> !field.isEmpty())
 					.collect(Collectors.toSet());
 		}
+		loadConfig();
 	}
 
 	protected boolean loadConfig() throws IOException {
@@ -116,28 +118,67 @@ public class GenerationMeterComponent {
 			body = response.body().string();
 			logger.debug("fetched data: " + body);
 		}
+		return parseDeviceInformation(body, server.getSite(), server.getName());
+	}
+
+	public void handleDeviceBody(String body) throws XPathExpressionException {
+		if (servers == null) {
+			return;
+		}
 		InputSource xml = new InputSource(new StringReader(body));
-		NodeList nodes = (NodeList) XPathFactory.newInstance()
-				.newXPath()
-				.compile("/DAS/devices/device/records/record/point")
-				.evaluate(xml, XPathConstants.NODESET);
-		Device device = new Device(server.getSite(), server.getName());
-		for (int i = 0; i < nodes.getLength(); i++) {
-			String name = nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
-			if (fields.contains(name)) {
-				device.addAttribute(new DeviceAttribute(
-						name,
-						nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
-						Float.parseFloat(nodes.item(i)
-								.getAttributes()
-								.getNamedItem("value")
-								.getNodeValue())));
+		NodeList nodes = (NodeList)
+				XPathFactory.newInstance().newXPath().compile("/DAS/mode").evaluate(xml, XPathConstants.NODESET);
+		if (nodes.getLength() > 0 && "LOGFILEUPLOAD".equals(nodes.item(0).getTextContent())) {
+			xml = new InputSource(new StringReader(body));
+			nodes = (NodeList)
+					XPathFactory.newInstance().newXPath().compile("/DAS/name").evaluate(xml, XPathConstants.NODESET);
+			if (nodes.getLength() > 0) {
+				Optional.ofNullable(findServerFromDeviceName(nodes.item(0).getTextContent()))
+						.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
+						.ifPresent(device -> openSearch.logData(new Date(), Collections.singletonList(device)));
 			}
 		}
-		if (device.getName() != null) {
-			calculateTotalEnergyConsumed(device);
+	}
+
+	private Server findServerFromDeviceName(String deviceName) {
+		if (servers == null || deviceName == null || deviceName.isBlank()) {
+			return null;
 		}
-		return device;
+		return servers.getServers().stream()
+				.filter(server -> deviceName.equals(server.getDeviceName()))
+				.findAny()
+				.orElse(null);
+	}
+
+	private Device parseDeviceInformation(String body, String site, String name) {
+		try {
+			InputSource xml = new InputSource(new StringReader(body));
+			NodeList nodes = (NodeList) XPathFactory.newInstance()
+					.newXPath()
+					.compile("/DAS/devices/device/records/record/point")
+					.evaluate(xml, XPathConstants.NODESET);
+			Device device = new Device(site, name);
+			for (int i = 0; i < nodes.getLength(); i++) {
+				String attributeName =
+						nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
+				if (fields.contains(attributeName)) {
+					device.addAttribute(new DeviceAttribute(
+							attributeName,
+							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
+							Float.parseFloat(nodes.item(i)
+									.getAttributes()
+									.getNamedItem("value")
+									.getNodeValue())));
+				}
+			}
+			if (device.getName() != null) {
+				calculateTotalEnergyConsumed(device);
+			}
+			return device;
+		} catch (XPathExpressionException e) {
+			logger.error("parseDeviceInformation", e);
+		}
+		return null;
 	}
 
 	private void fillInVirtualDevices(List<Device> devices) {
