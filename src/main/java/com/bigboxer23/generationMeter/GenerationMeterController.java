@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** */
 @RestController
 @Tag(name = "Generation Meter Controller", description = "Various APIs available for interacting with the meters.")
-public class GenerationMeterController implements MeterConstants{
+public class GenerationMeterController implements MeterConstants {
 
 	@Value("${uploadToken}")
 	private String uploadToken;
@@ -87,14 +87,13 @@ public class GenerationMeterController implements MeterConstants{
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		logger.info("received uploaded data");
 		String authorization = servletRequest.getHeader("Authorization");
-		if (authorization == null || !authorization.startsWith("Basic "))
-		{
+		if (authorization == null || !authorization.startsWith("Basic ")) {
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		String usernameAndPassword = authorization.substring(6);
 		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
 		String[] parts = decoded.split(":");
-		//String username = parts[0];//This is the device id
+		// String username = parts[0];//This is the device id
 		if (parts.length != 2 || !uploadToken.equals(parts[1])) {
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}

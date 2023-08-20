@@ -28,7 +28,7 @@ import org.xml.sax.InputSource;
 
 /** Class to read data from the generation meter web interface */
 @Component
-public class GenerationMeterComponent implements MeterConstants{
+public class GenerationMeterComponent implements MeterConstants {
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
 	private final Moshi moshi = new Moshi.Builder().build();
@@ -132,8 +132,10 @@ public class GenerationMeterComponent implements MeterConstants{
 				XPathFactory.newInstance().newXPath().compile(MODE_PATH).evaluate(xml, XPathConstants.NODESET);
 		if (nodes.getLength() > 0 && FILE_DATA.equals(nodes.item(0).getTextContent())) {
 			xml = new InputSource(new StringReader(body));
-			nodes = (NodeList)
-					XPathFactory.newInstance().newXPath().compile(DEVICE_NAME_PATH).evaluate(xml, XPathConstants.NODESET);
+			nodes = (NodeList) XPathFactory.newInstance()
+					.newXPath()
+					.compile(DEVICE_NAME_PATH)
+					.evaluate(xml, XPathConstants.NODESET);
 			if (nodes.getLength() > 0) {
 				Optional.ofNullable(findServerFromDeviceName(nodes.item(0).getTextContent()))
 						.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
@@ -158,10 +160,8 @@ public class GenerationMeterComponent implements MeterConstants{
 		try {
 			logger.debug("parsing device info " + site + ":" + name + "\n" + body);
 			InputSource xml = new InputSource(new StringReader(body));
-			NodeList nodes = (NodeList) XPathFactory.newInstance()
-					.newXPath()
-					.compile(POINT_PATH)
-					.evaluate(xml, XPathConstants.NODESET);
+			NodeList nodes = (NodeList)
+					XPathFactory.newInstance().newXPath().compile(POINT_PATH).evaluate(xml, XPathConstants.NODESET);
 			Device device = new Device(site, name);
 			for (int i = 0; i < nodes.getLength(); i++) {
 				String attributeName =
