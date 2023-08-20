@@ -6,6 +6,7 @@ import com.bigboxer23.generationMeter.data.Server;
 import com.bigboxer23.generationMeter.data.Servers;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
+import com.squareup.moshi.JsonEncodingException;
 import com.squareup.moshi.Moshi;
 import java.io.File;
 import java.io.IOException;
@@ -79,10 +80,15 @@ public class GenerationMeterComponent implements MeterConstants {
 		}
 		if (servers == null || serversLastMod < config.lastModified()) {
 			logger.info("Config changed, reading config from file");
-			servers = moshi.adapter(Servers.class)
-					.fromJson(FileUtils.readFileToString(config, Charset.defaultCharset())
-							.trim());
-			serversLastMod = config.lastModified();
+			try {
+				servers = moshi.adapter(Servers.class)
+						.fromJson(FileUtils.readFileToString(config, Charset.defaultCharset())
+								.trim());
+				serversLastMod = config.lastModified();
+			} catch (JsonEncodingException e) {
+				logger.error("invalid json.\n\n" + FileUtils.readFileToString(config, Charset.defaultCharset()), e);
+				return false;
+			}
 			return true;
 		}
 		return false;
@@ -99,7 +105,9 @@ public class GenerationMeterComponent implements MeterConstants {
 		logger.info("starting fetch of data");
 		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
-			devices.add(getDeviceInformation(server));
+			if (server.getPassword() != null && server.getUser() != null) {
+				devices.add(getDeviceInformation(server));
+			}
 		}
 		fillInVirtualDevices(devices);
 		openSearch.logData(fetchDate, devices);
