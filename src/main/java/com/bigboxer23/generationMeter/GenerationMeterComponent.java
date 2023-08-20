@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
 import okhttp3.Response;
@@ -30,6 +29,22 @@ import org.xml.sax.InputSource;
 /** Class to read data from the generation meter web interface */
 @Component
 public class GenerationMeterComponent implements MeterConstants {
+
+	private static final Map<String, String> fields = new HashMap<>();
+
+	static {
+		fields.put("Total Energy Consumption", "Total Energy Consumption");
+		fields.put("Total Real Power", "Total Real Power");
+		fields.put("Average Current", "Average Current");
+		fields.put("Average Voltage (L-N)", "Average Voltage (L-N)");
+		fields.put("Total (System) Power Factor", "Total (System) Power Factor");
+		fields.put("Energy Consumption", "Total Energy Consumption");
+		fields.put("Real Power", "Total Real Power");
+		fields.put("Current", "Average Current");
+		fields.put("Voltage, Line to Neutral", "Average Voltage (L-N)");
+		fields.put("Power Factor", "Total (System) Power Factor");
+	}
+
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
 
 	private final Moshi moshi = new Moshi.Builder().build();
@@ -37,8 +52,6 @@ public class GenerationMeterComponent implements MeterConstants {
 	private final ElasticComponent elastic;
 
 	private final OpenSearchComponent openSearch;
-
-	private Set<String> fields = new HashSet<>();
 
 	private Servers servers;
 
@@ -57,13 +70,6 @@ public class GenerationMeterComponent implements MeterConstants {
 		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
-		String fieldString = env.getProperty("generation-meter-fields");
-		if (fieldString != null) {
-			fields = Arrays.stream(fieldString.split(","))
-					.map(String::trim)
-					.filter(field -> !field.isEmpty())
-					.collect(Collectors.toSet());
-		}
 		loadConfig();
 	}
 
@@ -174,9 +180,9 @@ public class GenerationMeterComponent implements MeterConstants {
 			for (int i = 0; i < nodes.getLength(); i++) {
 				String attributeName =
 						nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
-				if (fields.contains(attributeName)) {
+				if (fields.containsKey(attributeName)) {
 					device.addAttribute(new DeviceAttribute(
-							attributeName,
+							fields.get(attributeName),
 							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
 							Float.parseFloat(nodes.item(i)
 									.getAttributes()
