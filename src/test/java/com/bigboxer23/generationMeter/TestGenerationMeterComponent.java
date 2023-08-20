@@ -19,9 +19,7 @@ public class TestGenerationMeterComponent {
 
 	@Test
 	public void testLoadConfig() throws IOException {
-		assertTrue(component.loadConfig());
 		assertFalse(component.loadConfig());
-
 		// test modification
 		File file = new File(System.getProperty("user.dir") + File.separator + "servers.json");
 		long timeMillis = System.currentTimeMillis();
@@ -29,5 +27,6 @@ public class TestGenerationMeterComponent {
 		Files.setAttribute(file.toPath(), "lastAccessTime", accessFileTime);
 		file.setLastModified(timeMillis);
 		assertTrue(component.loadConfig());
+		assertFalse(component.loadConfig());
 	}
 }
