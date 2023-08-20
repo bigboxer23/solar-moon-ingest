@@ -13,10 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Base64;
 import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,6 +31,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Tag(name = "Generation Meter Controller", description = "Various APIs available for interacting with the meters.")
 public class GenerationMeterController implements MeterConstants{
+
+	@Value("${uploadToken}")
+	private String uploadToken;
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterController.class);
 
@@ -81,7 +86,19 @@ public class GenerationMeterController implements MeterConstants{
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		logger.info("received uploaded data");
-		servletRequest.getHeaderNames();
+		String authorization = servletRequest.getHeader("Authorization");
+		if (authorization == null || !authorization.startsWith("Basic "))
+		{
+			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
+		}
+		String usernameAndPassword = authorization.substring(6);
+		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
+		String[] parts = decoded.split(":");
+		//String username = parts[0];//This is the device id
+		if (parts.length != 2 || !uploadToken.equals(parts[1])) {
+			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
+		}
+
 		try (BufferedReader reader = servletRequest.getReader()) {
 			component.handleDeviceBody(IOUtils.toString(reader));
 		} catch (XPathExpressionException | IOException e) {
