@@ -88,6 +88,7 @@ public class GenerationMeterController implements MeterConstants {
 		logger.info("received uploaded data");
 		String authorization = servletRequest.getHeader("Authorization");
 		if (authorization == null || !authorization.startsWith("Basic ")) {
+			logger.warn("missing authorization token.");
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		String usernameAndPassword = authorization.substring(6);
@@ -95,6 +96,7 @@ public class GenerationMeterController implements MeterConstants {
 		String[] parts = decoded.split(":");
 		// String username = parts[0];//This is the device id
 		if (parts.length != 2 || !uploadToken.equals(parts[1])) {
+			logger.warn("invalid token, returning unauthorized: " + parts[1]);
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 
@@ -106,6 +108,7 @@ public class GenerationMeterController implements MeterConstants {
 		}
 		HttpHeaders httpHeaders = new HttpHeaders();
 		httpHeaders.setContentType(MediaType.TEXT_XML);
+		logger.debug("successfully uploaded data");
 		return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 	}
 }

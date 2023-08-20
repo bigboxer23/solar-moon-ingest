@@ -182,7 +182,7 @@
         <version>3.1.0</version>
         <executions>
           <execution>
-            <id>Moving jar to server</id>
+            <id>Uploading jar to server</id>
             <goals>
               <goal>exec</goal>
             </goals>
