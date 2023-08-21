@@ -84,4 +84,8 @@ public class Device {
 				.map(DeviceAttribute::getValue)
 				.orElse(-1f);
 	}
+
+	public void setPowerFactor(float powerFactor) {
+		getAttributes().put(TOTAL_PF, new DeviceAttribute(TOTAL_PF, "", powerFactor));
+	}
 }

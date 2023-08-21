@@ -234,7 +234,10 @@ public class GenerationMeterComponent implements MeterConstants {
 					+ device.getPowerFactor());
 			return;
 		}
-		double rp = (device.getAverageVoltage() * device.getAverageCurrent() * device.getPowerFactor() * Math.sqrt(3))
+		double rp = (device.getAverageVoltage()
+						* device.getAverageCurrent()
+						* Math.abs(device.getPowerFactor() / 100)
+						* Math.sqrt(3))
 				/ 1000f;
 		device.setTotalRealPower(
 				new BigDecimal(rp).setScale(1, RoundingMode.HALF_UP).floatValue());
