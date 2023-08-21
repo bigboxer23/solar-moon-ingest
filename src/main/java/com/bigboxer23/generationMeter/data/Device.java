@@ -1,5 +1,7 @@
 package com.bigboxer23.generationMeter.data;
 
+import static com.bigboxer23.generationMeter.MeterConstants.*;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -8,10 +10,6 @@ import lombok.Data;
 /** */
 @Data
 public class Device {
-	public static final String TOTAL_ENG_CONS = "Total Energy Consumption";
-	public static final String ENG_CONS = "Energy Consumed";
-	public static final String TOTAL_REAL_POWER = "Total Real Power";
-	public static final String DEVICE_NAME = "device-name";
 
 	private Map<String, DeviceAttribute> attributes;
 
@@ -67,5 +65,23 @@ public class Device {
 
 	public String getSite() {
 		return (String) attributes.get("site").getValue();
+	}
+
+	public float getAverageVoltage() {
+		return (float) Optional.ofNullable(getAttributes().get(AVG_VOLT))
+				.map(DeviceAttribute::getValue)
+				.orElse(-1f);
+	}
+
+	public float getAverageCurrent() {
+		return (float) Optional.ofNullable(getAttributes().get(AVG_CURRENT))
+				.map(DeviceAttribute::getValue)
+				.orElse(-1f);
+	}
+
+	public float getPowerFactor() {
+		return (float) Optional.ofNullable(getAttributes().get(TOTAL_PF))
+				.map(DeviceAttribute::getValue)
+				.orElse(-1f);
 	}
 }

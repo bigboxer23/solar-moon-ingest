@@ -72,7 +72,7 @@ public class OpenSearchComponent extends ElasticComponent {
 	public Float getTotalEnergyConsumed(Device device) {
 		try {
 			MatchPhraseQuery query = new MatchPhraseQuery.Builder()
-					.field(Device.DEVICE_NAME)
+					.field(MeterConstants.DEVICE_NAME)
 					.query(device.getName())
 					.build();
 			SearchRequest request = new SearchRequest.Builder()
@@ -87,7 +87,7 @@ public class OpenSearchComponent extends ElasticComponent {
 					.size(1)
 					.source(new SourceConfig.Builder()
 							.filter(new SourceFilter.Builder()
-									.includes(Collections.singletonList(Device.TOTAL_ENG_CONS))
+									.includes(Collections.singletonList(MeterConstants.TOTAL_ENG_CONS))
 									.build())
 							.build())
 					.build();
@@ -101,7 +101,7 @@ public class OpenSearchComponent extends ElasticComponent {
 				logger.warn("No fields associated with result for " + device.getName());
 				return null;
 			}
-			return Optional.ofNullable((Double) fields.get(Device.TOTAL_ENG_CONS))
+			return Optional.ofNullable((Double) fields.get(MeterConstants.TOTAL_ENG_CONS))
 					.map(Double::floatValue)
 					.orElseGet(() -> {
 						logger.warn("Unexpected value type for " + device.getName());

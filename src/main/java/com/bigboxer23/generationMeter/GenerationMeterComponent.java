@@ -11,6 +11,8 @@ import com.squareup.moshi.Moshi;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.util.*;
 import javax.xml.xpath.*;
@@ -33,22 +35,20 @@ public class GenerationMeterComponent implements MeterConstants {
 	private static final Map<String, String> fields = new HashMap<>();
 
 	static {
-		fields.put("Total Energy Consumption", "Total Energy Consumption");
-		fields.put("Total Real Power", "Total Real Power");
-		fields.put("Average Current", "Average Current");
-		fields.put("Average Voltage (L-N)", "Average Voltage (L-N)");
-		fields.put("Total (System) Power Factor", "Total (System) Power Factor");
-		fields.put("Energy Consumption", "Total Energy Consumption");
-		fields.put("Real Power", "Total Real Power");
-		fields.put("Current", "Average Current");
-		fields.put("Voltage, Line to Neutral", "Average Voltage (L-N)");
-		fields.put("Power Factor", "Total (System) Power Factor");
-
-		fields.put("kWh del+rec", "Total Energy Consumption");
-		// TODO:calculated fields.put("Real Power", "Total Real Power");
-		fields.put("I a", "Average Current");
-		fields.put("Vll ab", "Average Voltage (L-N)");
-		fields.put("PF sign tot", "Total (System) Power Factor");
+		fields.put(TOTAL_ENG_CONS, TOTAL_ENG_CONS);
+		fields.put(TOTAL_REAL_POWER, TOTAL_REAL_POWER);
+		fields.put(AVG_CURRENT, AVG_CURRENT);
+		fields.put(AVG_VOLT, AVG_VOLT);
+		fields.put(TOTAL_PF, TOTAL_PF);
+		fields.put("Energy Consumption", TOTAL_ENG_CONS);
+		fields.put("Real Power", TOTAL_REAL_POWER);
+		fields.put("Current", AVG_CURRENT);
+		fields.put("Voltage, Line to Neutral", AVG_VOLT);
+		fields.put("Power Factor", TOTAL_PF);
+		fields.put("kWh del+rec", TOTAL_ENG_CONS);
+		fields.put("I a", AVG_CURRENT);
+		fields.put("Vll ab", AVG_VOLT);
+		fields.put("PF sign tot", TOTAL_PF);
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
@@ -188,7 +188,7 @@ public class GenerationMeterComponent implements MeterConstants {
 				});
 	}
 
-	private Device parseDeviceInformation(String body, String site, String name) {
+	protected Device parseDeviceInformation(String body, String site, String name) {
 		try {
 			logger.debug("parsing device info " + site + ":" + name + "\n" + body);
 			InputSource xml = new InputSource(new StringReader(body));
@@ -208,14 +208,36 @@ public class GenerationMeterComponent implements MeterConstants {
 									.getNodeValue())));
 				}
 			}
-			if (device.getName() != null) {
-				calculateTotalEnergyConsumed(device);
-			}
+			calculateTotalRealPower(device);
+			calculateTotalEnergyConsumed(device);
 			return device;
 		} catch (XPathExpressionException e) {
 			logger.error("parseDeviceInformation", e);
 		}
 		return null;
+	}
+
+	private void calculateTotalRealPower(Device device) {
+		if (device.getTotalRealPower() != -1) {
+			logger.debug("Value already exists, not calculating");
+			return;
+		}
+		if (device.getAverageVoltage() == -1 || device.getAverageCurrent() == -1 || device.getPowerFactor() == -1) {
+
+			logger.info("missing required values to calculate real power "
+					+ device.getName()
+					+ " "
+					+ device.getAverageVoltage()
+					+ ","
+					+ device.getAverageCurrent()
+					+ ","
+					+ device.getPowerFactor());
+			return;
+		}
+		double rp = (device.getAverageVoltage() * device.getAverageCurrent() * device.getPowerFactor() * Math.sqrt(3))
+				/ 1000f;
+		device.setTotalRealPower(
+				new BigDecimal(rp).setScale(1, RoundingMode.HALF_UP).floatValue());
 	}
 
 	private void fillInVirtualDevices(List<Device> devices) {
@@ -259,6 +281,10 @@ public class GenerationMeterComponent implements MeterConstants {
 	 * @param attr
 	 */
 	private void calculateTotalEnergyConsumed(Device device) {
+		if (device.getName() == null) {
+			logger.info("Can't calc total energy w/o device name");
+			return;
+		}
 		logger.debug("calculating total energy consumed. " + device.getName());
 		float totalEnergyConsumption = device.getTotalEnergyConsumed();
 		if (totalEnergyConsumption < 0) {
