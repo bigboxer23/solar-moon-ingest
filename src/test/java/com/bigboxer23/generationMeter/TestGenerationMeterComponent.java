@@ -2,6 +2,7 @@ package com.bigboxer23.generationMeter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.bigboxer23.generationMeter.data.Device;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,5 +51,11 @@ public class TestGenerationMeterComponent implements TestConstants {
 			return;
 		}
 		fail();
+	}
+
+	@Test
+	public void testCalculatedTotalRealPower() {
+		Device device2 = component.parseDeviceInformation(device2Xml, "site1", device2Name);
+		assertEquals(device2.getTotalRealPower(), 42267.1f);
 	}
 }
