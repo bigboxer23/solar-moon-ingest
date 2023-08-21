@@ -56,6 +56,8 @@ public class TestGenerationMeterComponent implements TestConstants {
 	@Test
 	public void testCalculatedTotalRealPower() {
 		Device device2 = component.parseDeviceInformation(device2Xml, "site1", device2Name);
-		assertEquals(device2.getTotalRealPower(), 42267.1f);
+		assertEquals(device2.getTotalRealPower(), 422.7f);
+		device2.setPowerFactor(-device2.getPowerFactor());
+		assertEquals(device2.getTotalRealPower(), 422.7f);
 	}
 }
