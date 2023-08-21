@@ -85,10 +85,10 @@ public class GenerationMeterController implements MeterConstants {
 			requestBody = @RequestBody(description = "XML string content to parse"))
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
-		logger.info("received uploaded data");
+		logger.info("received uploaded data: " + servletRequest.getRemoteAddr());
 		String authorization = servletRequest.getHeader("Authorization");
 		if (authorization == null || !authorization.startsWith("Basic ")) {
-			logger.warn("missing authorization token.");
+			logger.warn("Missing authorization token.");
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		String usernameAndPassword = authorization.substring(6);
@@ -96,7 +96,7 @@ public class GenerationMeterController implements MeterConstants {
 		String[] parts = decoded.split(":");
 		// String username = parts[0];//This is the device id
 		if (parts.length != 2 || !uploadToken.equals(parts[1])) {
-			logger.warn("invalid token, returning unauthorized: " + parts[1]);
+			logger.warn("Invalid token, returning unauthorized: " + parts[1]);
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 
