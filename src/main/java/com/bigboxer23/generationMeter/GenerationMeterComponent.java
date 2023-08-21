@@ -43,6 +43,12 @@ public class GenerationMeterComponent implements MeterConstants {
 		fields.put("Current", "Average Current");
 		fields.put("Voltage, Line to Neutral", "Average Voltage (L-N)");
 		fields.put("Power Factor", "Total (System) Power Factor");
+
+		fields.put("kWh del+rec", "Total Energy Consumption");
+		// TODO:calculated fields.put("Real Power", "Total Real Power");
+		fields.put("I a", "Average Current");
+		fields.put("Vll ab", "Average Voltage (L-N)");
+		fields.put("PF sign tot", "Total (System) Power Factor");
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterComponent.class);
