@@ -141,21 +141,30 @@ public class GenerationMeterComponent implements MeterConstants {
 			return;
 		}
 		logger.debug("parsing device body: " + body);
-		InputSource xml = new InputSource(new StringReader(body));
-		NodeList nodes = (NodeList)
-				XPathFactory.newInstance().newXPath().compile(MODE_PATH).evaluate(xml, XPathConstants.NODESET);
-		if (nodes.getLength() > 0 && FILE_DATA.equals(nodes.item(0).getTextContent())) {
-			xml = new InputSource(new StringReader(body));
-			nodes = (NodeList) XPathFactory.newInstance()
-					.newXPath()
-					.compile(DEVICE_NAME_PATH)
-					.evaluate(xml, XPathConstants.NODESET);
-			if (nodes.getLength() > 0) {
-				Optional.ofNullable(findServerFromDeviceName(nodes.item(0).getTextContent()))
-						.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
-						.ifPresent(device -> openSearch.logData(new Date(), Collections.singletonList(device)));
-			}
+		if (!isUpdateEvent(body)) {
+			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
+			return;
 		}
+		Optional.ofNullable(findDeviceName(body))
+				.map(this::findServerFromDeviceName)
+				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
+				.ifPresent(device -> openSearch.logData(new Date(), Collections.singletonList(device)));
+	}
+
+	public boolean isUpdateEvent(String body) throws XPathExpressionException {
+		NodeList nodes = (NodeList) XPathFactory.newInstance()
+				.newXPath()
+				.compile(MODE_PATH)
+				.evaluate(new InputSource(new StringReader(body)), XPathConstants.NODESET);
+		return nodes.getLength() > 0 && FILE_DATA.equals(nodes.item(0).getTextContent());
+	}
+
+	public String findDeviceName(String body) throws XPathExpressionException {
+		NodeList nodes = (NodeList) XPathFactory.newInstance()
+				.newXPath()
+				.compile(DEVICE_NAME_PATH)
+				.evaluate(new InputSource(new StringReader(body)), XPathConstants.NODESET);
+		return nodes.getLength() > 0 ? nodes.item(0).getTextContent() : null;
 	}
 
 	private Server findServerFromDeviceName(String deviceName) {
@@ -167,7 +176,10 @@ public class GenerationMeterComponent implements MeterConstants {
 		return servers.getServers().stream()
 				.filter(server -> deviceName.equals(server.getDeviceName()))
 				.findAny()
-				.orElse(null);
+				.orElseGet(() -> {
+					logger.warn("could not find server name for " + deviceName);
+					return null;
+				});
 	}
 
 	private Device parseDeviceInformation(String body, String site, String name) {
