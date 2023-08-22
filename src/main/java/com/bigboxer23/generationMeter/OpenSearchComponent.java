@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OpenSearchComponent extends ElasticComponent {
 
-	public static final String TIMESTAMP = "@timestamp";
+	private static final String TIMESTAMP = "@timestamp";
 
 	private OpenSearchClient client;
 
@@ -126,7 +126,7 @@ public class OpenSearchComponent extends ElasticComponent {
 											.build()
 											._toQuery(),
 									QueryBuilders.range()
-											.field("@timestamp")
+											.field(TIMESTAMP)
 											.gte(JsonData.of("now-15m"))
 											.build()
 											._toQuery())
