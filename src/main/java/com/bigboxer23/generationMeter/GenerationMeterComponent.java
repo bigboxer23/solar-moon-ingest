@@ -22,7 +22,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.NodeList;
@@ -67,15 +66,18 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
 
+	private SiteComponent siteComponent;
+
 	public GenerationMeterComponent(
 			OpenSearchComponent openSearch,
 			@Qualifier("elasticComponent") ElasticComponent elastic,
 			AlarmComponent alarmComponent,
-			Environment env)
+			SiteComponent siteComponent)
 			throws IOException {
 		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
+		this.siteComponent = siteComponent;
 		loadConfig();
 	}
 
@@ -117,18 +119,18 @@ public class GenerationMeterComponent implements MeterConstants {
 		logger.info("starting fetch of data");
 		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
-			if (server.getPassword() != null && server.getUser() != null) {
+			if (!server.isPushedDevice()) {
 				devices.add(getDeviceInformation(server));
 			}
 		}
-		fillInVirtualDevices(devices);
+		siteComponent.fillInSites(servers.getSites(), devices, servers.getServers());
 		openSearch.logData(fetchDate, devices);
 		alarmComponent.fireAlarms(devices);
 		logger.info("end of fetch data");
 	}
 
 	public Device getDeviceInformation(Server server) throws XPathExpressionException, IOException {
-		if (server == null || server.getUser() == null || server.getPassword() == null) {
+		if (server == null || server.isPushedDevice()) {
 			logger.warn("server or user or pw is null, cannot fetch data: " + server);
 			return null;
 		}
@@ -243,39 +245,6 @@ public class GenerationMeterComponent implements MeterConstants {
 				new BigDecimal(rp).setScale(1, RoundingMode.HALF_UP).floatValue());
 	}
 
-	private void fillInVirtualDevices(List<Device> devices) {
-		if (servers.getSites() == null) {
-			return;
-		}
-		logger.debug("starting to fill in virtual devices");
-		List<Device> sites = new ArrayList<>();
-		servers.getSites().forEach(site -> {
-			logger.debug("adding virtual device " + site.getSite());
-			Device siteDevice = new Device(site.getName(), site.getName());
-			siteDevice.setIsVirtual();
-			sites.add(siteDevice);
-			float totalEnergyConsumed = devices.stream()
-					.filter(device -> device.getSite().equals(site.getName()))
-					.map(Device::getEnergyConsumed)
-					.filter(energy -> energy >= 0)
-					.reduce(Float::sum)
-					.orElse(-1f);
-			if (totalEnergyConsumed > -1) {
-				siteDevice.setEnergyConsumed(totalEnergyConsumed);
-			}
-			float totalRealPower = devices.stream()
-					.filter(device -> device.getSite().equals(site.getName()))
-					.map(Device::getTotalRealPower)
-					.filter(energy -> energy >= 0)
-					.reduce(Float::sum)
-					.orElse(-1f);
-			if (totalRealPower > -1) {
-				siteDevice.setTotalRealPower(totalRealPower);
-			}
-		});
-		devices.addAll(sites);
-	}
-
 	/**
 	 * Calculate the difference of power consumed since the last run. Add a new field with the
 	 * difference
@@ -294,7 +263,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			return;
 		}
 		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.computeIfAbsent(
-				device.getName(), name -> openSearch.getTotalEnergyConsumed(device));
+				device.getName(), name -> openSearch.getTotalEnergyConsumed(device.getName()));
 		if (previousTotalEnergyConsumed != null) {
 			device.setEnergyConsumed(totalEnergyConsumption - previousTotalEnergyConsumed);
 		}

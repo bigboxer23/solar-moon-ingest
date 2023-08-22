@@ -11,12 +11,13 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.opensearch.client.RestClient;
+import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.FieldSort;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.SortOrder;
-import org.opensearch.client.opensearch._types.query_dsl.MatchPhraseQuery;
+import org.opensearch.client.opensearch._types.query_dsl.QueryBuilders;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.SearchRequest;
@@ -69,15 +70,15 @@ public class OpenSearchComponent extends ElasticComponent {
 		}
 	}
 
-	public Float getTotalEnergyConsumed(Device device) {
+	public Float getTotalEnergyConsumed(String deviceName) {
 		try {
-			MatchPhraseQuery query = new MatchPhraseQuery.Builder()
-					.field(MeterConstants.DEVICE_NAME)
-					.query(device.getName())
-					.build();
 			SearchRequest request = new SearchRequest.Builder()
 					.index(Collections.singletonList(INDEX_NAME))
-					.query(query._toQuery())
+					.query(QueryBuilders.matchPhrase()
+							.field(MeterConstants.DEVICE_NAME)
+							.query(deviceName)
+							.build()
+							._toQuery())
 					.sort(new SortOptions.Builder()
 							.field(new FieldSort.Builder()
 									.field(TIMESTAMP)
@@ -93,20 +94,63 @@ public class OpenSearchComponent extends ElasticComponent {
 					.build();
 			SearchResponse<Map> response = getClient().search(request, Map.class);
 			if (response.hits().hits().isEmpty()) {
-				logger.warn("couldn't find previous value for " + device.getName());
+				logger.warn("couldn't find previous value for " + deviceName);
 				return null;
 			}
 			Map<String, Object> fields = response.hits().hits().get(0).source();
 			if (fields == null) {
-				logger.warn("No fields associated with result for " + device.getName());
+				logger.warn("No fields associated with result for " + deviceName);
 				return null;
 			}
 			return Optional.ofNullable((Double) fields.get(MeterConstants.TOTAL_ENG_CONS))
 					.map(Double::floatValue)
 					.orElseGet(() -> {
-						logger.warn("Unexpected value type for " + device.getName());
+						logger.warn("Unexpected value type for " + deviceName);
 						return null;
 					});
+		} catch (IOException e) {
+			logger.error("getTotalEnergyConsumed:", e);
+			return null;
+		}
+	}
+
+	public Device getLastDeviceEntry(String deviceName) {
+		try {
+			SearchRequest request = new SearchRequest.Builder()
+					.index(Collections.singletonList(INDEX_NAME))
+					.query(QueryBuilders.bool()
+							.must(
+									QueryBuilders.matchPhrase()
+											.field(MeterConstants.DEVICE_NAME)
+											.query(deviceName)
+											.build()
+											._toQuery(),
+									QueryBuilders.range()
+											.field("@timestamp")
+											.gte(JsonData.of("now-15m"))
+											.build()
+											._toQuery())
+							.build()
+							._toQuery())
+					.sort(new SortOptions.Builder()
+							.field(new FieldSort.Builder()
+									.field(TIMESTAMP)
+									.order(SortOrder.Desc)
+									.build())
+							.build())
+					.size(1)
+					.build();
+			SearchResponse<Map> response = getClient().search(request, Map.class);
+			if (response.hits().hits().isEmpty()) {
+				logger.warn("couldn't find previous value for " + deviceName);
+				return null;
+			}
+			Map<String, Object> fields = response.hits().hits().get(0).source();
+			if (fields == null) {
+				logger.warn("No fields associated with result for " + deviceName);
+				return null;
+			}
+			return new Device(fields);
 		} catch (IOException e) {
 			logger.error("getTotalEnergyConsumed:", e);
 			return null;

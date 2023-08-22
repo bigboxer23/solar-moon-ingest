@@ -18,4 +18,8 @@ public class Server {
 	private String type;
 
 	private String deviceName;
+
+	public boolean isPushedDevice() {
+		return getPassword() == null && getUser() == null;
+	}
 }

@@ -13,6 +13,23 @@ public class Device {
 
 	private Map<String, DeviceAttribute> attributes;
 
+	public Device(Map<String, Object> openSearchMap) {
+		this((String) openSearchMap.get("site"), (String) openSearchMap.get("device-name"));
+		setTotalRealPower(doubleToFloat(openSearchMap.get(TOTAL_REAL_POWER)));
+		setEnergyConsumed(doubleToFloat(openSearchMap.get(ENG_CONS)));
+		setPowerFactor(doubleToFloat(openSearchMap.get(TOTAL_PF)));
+		setAverageVoltage(doubleToFloat(openSearchMap.get(AVG_VOLT)));
+		setAverageCurrent(doubleToFloat(openSearchMap.get(AVG_CURRENT)));
+		setTotalEnergyConsumed(doubleToFloat(openSearchMap.get(TOTAL_ENG_CONS)));
+	}
+
+	private float doubleToFloat(Object value) {
+		return Optional.ofNullable(value)
+				.map(val -> (Double) val)
+				.map(Double::floatValue)
+				.orElse(null);
+	}
+
 	public Device(String site, String name) {
 		attributes = new HashMap<>();
 		attributes.put("site", new DeviceAttribute("site", "", site));
@@ -39,6 +56,10 @@ public class Device {
 				.orElse(-1f);
 	}
 
+	public void setTotalEnergyConsumed(float totalEnergyConsumed) {
+		addAttribute(new DeviceAttribute(TOTAL_ENG_CONS, getTotalEnergyConsumedUnit(), totalEnergyConsumed));
+	}
+
 	public float getEnergyConsumed() {
 		return (Float) Optional.ofNullable(attributes.get(ENG_CONS))
 				.map(DeviceAttribute::getValue)
@@ -50,7 +71,7 @@ public class Device {
 	}
 
 	public void setIsVirtual() {
-		getAttributes().put("Virtual", new DeviceAttribute("Virtual", "", true));
+		addAttribute(new DeviceAttribute("Virtual", "", true));
 	}
 
 	public String getTotalEnergyConsumedUnit() {
@@ -73,10 +94,18 @@ public class Device {
 				.orElse(-1f);
 	}
 
+	public void setAverageVoltage(float voltage) {
+		addAttribute(new DeviceAttribute(AVG_VOLT, "", voltage));
+	}
+
 	public float getAverageCurrent() {
 		return (float) Optional.ofNullable(getAttributes().get(AVG_CURRENT))
 				.map(DeviceAttribute::getValue)
 				.orElse(-1f);
+	}
+
+	public void setAverageCurrent(float current) {
+		addAttribute(new DeviceAttribute(AVG_CURRENT, "", current));
 	}
 
 	public float getPowerFactor() {
@@ -86,6 +115,6 @@ public class Device {
 	}
 
 	public void setPowerFactor(float powerFactor) {
-		getAttributes().put(TOTAL_PF, new DeviceAttribute(TOTAL_PF, "", powerFactor));
+		addAttribute(new DeviceAttribute(TOTAL_PF, "", powerFactor));
 	}
 }
