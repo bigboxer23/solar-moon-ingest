@@ -1,0 +1,68 @@
+{
+  "servers":[
+	{
+	  "name":"site A1",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=14&TYPE=DATA",
+	  "site":"site",
+	  "user":"admin",
+	  "password":"tango"
+	},
+	{
+	  "name":"site B1",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=16&TYPE=DATA",
+	  "site":"site",
+	  "user":"admin",
+	  "password":"tango"
+	},
+	{
+	  "name":"site A2",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=10&TYPE=DATA",
+	  "deviceName":"001EC6000D96 A2",
+	  "site":"site",
+	  "user":"admin",
+	  "password":"tango"
+	},
+	{
+	  "name":"site B2",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=12&TYPE=DATA",
+	  "site":"site",
+	  "user":"admin",
+	  "password":"tango"
+	},
+	{
+	  "name":"site C1",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=12&TYPE=DATA",
+	  "site":"site",
+	  "user":"admin",
+	  "password":"tango"
+	},
+	{
+	  "name":"site C2",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=10&TYPE=DATA",
+	  "site":"site",
+	  "user":"admin",
+	  "password":"tango"
+	},
+	{
+	  "name":"site 2 Tracker",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=27&TYPE=DATA",
+	  "site":"site 2",
+	  "deviceName":"site 2 d"
+	},
+	{
+	  "name":"site 2 Total",
+	  "address":"http://127.0.0.1/setup/devicexml.cgi?ADDRESS=100&TYPE=DATA",
+	  "site":"site 2",
+	  "deviceName":"Meter ION 8600 2"
+	}
+  ],
+  "sites":[
+	{
+	  "name":"site"
+	},
+	{
+	  "name":"site 2",
+	  "subtraction": true
+	}
+  ]
+}

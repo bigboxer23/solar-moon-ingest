@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.NodeList;
@@ -68,25 +69,29 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private SiteComponent siteComponent;
 
+	private String configFile;
+
 	public GenerationMeterComponent(
 			OpenSearchComponent openSearch,
 			@Qualifier("elasticComponent") ElasticComponent elastic,
 			AlarmComponent alarmComponent,
-			SiteComponent siteComponent)
+			SiteComponent siteComponent,
+			Environment env)
 			throws IOException {
 		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
 		this.siteComponent = siteComponent;
+		configFile = env.getProperty("config.file");
 		loadConfig();
 	}
 
 	protected boolean loadConfig() throws IOException {
 		logger.debug("reading config file");
-		File config = new File(System.getProperty("user.dir") + File.separator + "servers.json");
+		File config = new File(System.getProperty("user.dir") + File.separator + configFile);
 		if (!config.exists()) {
 			logger.warn("no "
-					+ (System.getProperty("user.dir") + File.separator + "servers.json")
+					+ (System.getProperty("user.dir") + File.separator + configFile)
 					+ " file exists, not doing anything");
 			resetLoadedConfig();
 			return false;

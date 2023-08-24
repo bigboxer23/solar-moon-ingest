@@ -11,6 +11,7 @@ import java.nio.file.attribute.FileTime;
 import javax.xml.xpath.XPathExpressionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
@@ -21,11 +22,14 @@ public class TestGenerationMeterComponent implements TestConstants {
 	@Autowired
 	private GenerationMeterComponent component;
 
+	@Value("${config.file}")
+	private String configFileName;
+
 	@Test
 	public void testLoadConfig() throws IOException {
 		assertFalse(component.loadConfig());
 		// test modification
-		File file = new File(System.getProperty("user.dir") + File.separator + "servers.json");
+		File file = new File(System.getProperty("user.dir") + File.separator + configFileName);
 		long timeMillis = System.currentTimeMillis();
 		FileTime accessFileTime = FileTime.fromMillis(timeMillis);
 		Files.setAttribute(file.toPath(), "lastAccessTime", accessFileTime);

@@ -9,3 +9,4 @@ user=xxxxxxx
 logbackserver=xxxxxx:5671
 log_file=/User/home/generation-meter.log
 openweathermap.api=xxxxxxxxxx
+config.file=servers.json
