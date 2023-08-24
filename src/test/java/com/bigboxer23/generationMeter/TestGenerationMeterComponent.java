@@ -73,6 +73,7 @@ public class TestGenerationMeterComponent implements TestConstants {
 		device = component.parseDeviceInformation(device2Xml, "site1", device2Name);
 		assertNotNull(device);
 		assertTrue(device.isValid());
+		assertNull(component.parseDeviceInformation(device2Name, device2Name, device2Name));
 	}
 
 	@Test
