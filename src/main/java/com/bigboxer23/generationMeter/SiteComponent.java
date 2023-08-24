@@ -4,6 +4,7 @@ import com.bigboxer23.generationMeter.data.Device;
 import com.bigboxer23.generationMeter.data.Server;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,9 +84,10 @@ public class SiteComponent {
 				.filter(device -> device.getSite().equals(site.getName()))
 				.filter(Server::isPushedDevice)
 				.map(server -> openSearch.getLastDeviceEntry(server.getName()))
+				.filter(Objects::nonNull)
 				.map(mapper)
 				.filter(energy -> energy >= 0)
-				.reduce(Float::sum)
+				.reduce((val1, val2) -> site.isSubtraction() ? Math.abs(val1 - val2) : val1 + val2)
 				.orElse(-1f);
 	}
 }

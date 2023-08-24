@@ -201,13 +201,21 @@ public class GenerationMeterComponent implements MeterConstants {
 				String attributeName =
 						nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
 				if (fields.containsKey(attributeName)) {
-					device.addAttribute(new DeviceAttribute(
-							fields.get(attributeName),
-							nodes.item(i).getAttributes().getNamedItem("units").getNodeValue(),
-							Float.parseFloat(nodes.item(i)
-									.getAttributes()
-									.getNamedItem("value")
-									.getNodeValue())));
+					try {
+						float value = Float.parseFloat(nodes.item(i)
+								.getAttributes()
+								.getNamedItem("value")
+								.getNodeValue());
+						device.addAttribute(new DeviceAttribute(
+								fields.get(attributeName),
+								nodes.item(i)
+										.getAttributes()
+										.getNamedItem("units")
+										.getNodeValue(),
+								value));
+					} catch (NumberFormatException nfe) {
+						logger.warn("bad value retrieved from xml " + attributeName + "\n" + body, nfe);
+					}
 				}
 			}
 			calculateTotalRealPower(device);
