@@ -88,8 +88,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.warn("no "
 					+ (System.getProperty("user.dir") + File.separator + "servers.json")
 					+ " file exists, not doing anything");
-			servers = null;
-			serversLastMod = -1;
+			resetLoadedConfig();
 			return false;
 		}
 		if (servers == null || serversLastMod < config.lastModified()) {
@@ -101,11 +100,17 @@ public class GenerationMeterComponent implements MeterConstants {
 				serversLastMod = config.lastModified();
 			} catch (JsonEncodingException e) {
 				logger.error("invalid json.\n\n" + FileUtils.readFileToString(config, Charset.defaultCharset()), e);
+				resetLoadedConfig();
 				return false;
 			}
 			return true;
 		}
 		return false;
+	}
+
+	protected void resetLoadedConfig() {
+		servers = null;
+		serversLastMod = -1;
 	}
 
 	// @Scheduled(fixedDelay = 5000)
@@ -143,20 +148,27 @@ public class GenerationMeterComponent implements MeterConstants {
 		return parseDeviceInformation(body, server.getSite(), server.getName());
 	}
 
-	public void handleDeviceBody(String body) throws XPathExpressionException {
+	public boolean handleDeviceBody(String body) throws XPathExpressionException {
 		if (servers == null) {
 			logger.error("servers not defined, not doing anything.");
-			return;
+			return false;
 		}
 		logger.debug("parsing device body: " + body);
 		if (!isUpdateEvent(body)) {
 			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
-			return;
+			return false;
 		}
-		Optional.ofNullable(findDeviceName(body))
+		Device device = Optional.ofNullable(findDeviceName(body))
 				.map(this::findServerFromDeviceName)
 				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
-				.ifPresent(device -> openSearch.logData(new Date(), Collections.singletonList(device)));
+				.filter(Device::isValid)
+				.orElse(null);
+		if (device == null) {
+			logger.info("device was not valid, not handling");
+			return false;
+		}
+		openSearch.logData(new Date(), Collections.singletonList(device));
+		return true;
 	}
 
 	public boolean isUpdateEvent(String body) throws XPathExpressionException {
@@ -233,7 +245,6 @@ public class GenerationMeterComponent implements MeterConstants {
 			return;
 		}
 		if (device.getAverageVoltage() == -1 || device.getAverageCurrent() == -1 || device.getPowerFactor() == -1) {
-
 			logger.info("missing required values to calculate real power "
 					+ device.getName()
 					+ " "
@@ -280,5 +291,9 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private RequestBuilderCallback getAuthCallback(String user, String pass) {
 		return builder -> builder.addHeader("Authorization", Credentials.basic(user, pass));
+	}
+
+	protected Servers getServers() {
+		return servers;
 	}
 }
