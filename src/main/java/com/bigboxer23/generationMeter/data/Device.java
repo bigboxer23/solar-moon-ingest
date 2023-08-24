@@ -23,6 +23,10 @@ public class Device {
 		setTotalEnergyConsumed(doubleToFloat(openSearchMap.get(TOTAL_ENG_CONS)));
 	}
 
+	public boolean isValid() {
+		return getAttributes().size() > 2;
+	}
+
 	private float doubleToFloat(Object value) {
 		if (value == null) {
 			return -1;

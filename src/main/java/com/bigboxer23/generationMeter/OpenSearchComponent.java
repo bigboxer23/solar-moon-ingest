@@ -28,6 +28,7 @@ import org.opensearch.client.opensearch.core.search.SourceConfig;
 import org.opensearch.client.opensearch.core.search.SourceFilter;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /** */
@@ -47,7 +48,17 @@ public class OpenSearchComponent extends ElasticComponent {
 	@Value("${opensearch.pw}")
 	private String pass;
 
+	private boolean isTest = false;
+
+	public OpenSearchComponent(Environment env) {
+		isTest = Boolean.parseBoolean(env.getProperty("testing"));
+	}
+
 	public void logData(Date fetchDate, List<Device> devices) {
+		if (isTest) {
+			logger.info("not running, test is active.");
+			return;
+		}
 		logger.debug("sending to opensearch component");
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder().index(INDEX_NAME);
 		devices.forEach(device -> {
