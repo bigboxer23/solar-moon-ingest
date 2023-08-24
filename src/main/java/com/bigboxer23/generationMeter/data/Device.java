@@ -24,7 +24,10 @@ public class Device {
 	}
 
 	private float doubleToFloat(Object value) {
-		return Optional.ofNullable(value)
+		if (value == null) {
+			return -1;
+		}
+		return Optional.of(value)
 				.map(val -> (Double) val)
 				.map(Double::floatValue)
 				.orElse(null);
