@@ -26,12 +26,12 @@ public class TestOpenWeatherComponent {
 	@Test
 	@Order(1)
 	public void testGetLatLongFromCity() {
-		Location location = component.getLatLongFromCity("golden valley", "mn", 581);
+		Location location = component.getLatLongFromCity("golden valley", "mn", 840);
 		assertNotNull(location);
-		assertEquals(location.getLat(), 44.9861176);
-		assertEquals(location.getLon(), -93.3784618);
+		assertEquals(45.002, location.getLat());
+		assertEquals(-93.3585, location.getLon());
 		assertFalse(location.isFromCache());
-		location = component.getLatLongFromCity("golden valley", "mn", 581);
+		location = component.getLatLongFromCity("golden valley", "mn", 840);
 		assertTrue(location.isFromCache());
 	}
 
