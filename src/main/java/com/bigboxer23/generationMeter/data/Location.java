@@ -9,5 +9,9 @@ public class Location {
 
 	private double lon;
 
+	private String country;
+
+	private String state;
+
 	private boolean fromCache = false;
 }

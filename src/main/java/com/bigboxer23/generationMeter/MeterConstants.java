@@ -4,6 +4,13 @@ package com.bigboxer23.generationMeter;
 public interface MeterConstants {
 	String FILE_DATA = "LOGFILEUPLOAD";
 	String MODE_PATH = "/DAS/mode";
+
+	String DATE_PATH = "/DAS/devices/device/records/record/time";
+
+	String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss z";
+
+	String ZONE = "zone";
+
 	String POINT_PATH = "/DAS/devices/device/records/record/point";
 	String DEVICE_NAME_PATH = "/DAS/devices/device/name";
 	String XML_SUCCESS_RESPONSE = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><DAS><result>SUCCESS</result></DAS>";

@@ -2,6 +2,7 @@ package com.bigboxer23.generationMeter.data;
 
 import static com.bigboxer23.generationMeter.MeterConstants.*;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,8 @@ import lombok.Data;
 public class Device {
 
 	private Map<String, DeviceAttribute> attributes;
+
+	private Date date;
 
 	public Device(Map<String, Object> openSearchMap) {
 		this((String) openSearchMap.get("site"), (String) openSearchMap.get("device-name"));

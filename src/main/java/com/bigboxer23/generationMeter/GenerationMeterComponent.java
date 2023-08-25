@@ -14,6 +14,8 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
@@ -172,7 +175,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.info("device was not valid, not handling");
 			return false;
 		}
-		openSearch.logData(new Date(), Collections.singletonList(device));
+		openSearch.logData(device.getDate() != null ? device.getDate() : new Date(), Collections.singletonList(device));
 		return true;
 	}
 
@@ -237,11 +240,35 @@ public class GenerationMeterComponent implements MeterConstants {
 			}
 			calculateTotalRealPower(device);
 			calculateTotalEnergyConsumed(device);
+			calculateTime(device, body);
 			return device;
 		} catch (XPathExpressionException e) {
 			logger.error("parseDeviceInformation", e);
 		}
 		return null;
+	}
+
+	private void calculateTime(Device device, String body) throws XPathExpressionException {
+		InputSource xml = new InputSource(new StringReader(body));
+		NodeList nodes = (NodeList)
+				XPathFactory.newInstance().newXPath().compile(DATE_PATH).evaluate(xml, XPathConstants.NODESET);
+		if (nodes.getLength() > 0) {
+			Node timeNode = nodes.item(0);
+			if (timeNode.getTextContent() == null
+					|| "NULL".equals(timeNode.getTextContent())
+					|| timeNode.getTextContent().isEmpty()
+					|| timeNode.getAttributes().getNamedItem(ZONE) == null) {
+				return;
+			}
+			SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
+			try {
+				device.setDate(sdf.parse(timeNode.getTextContent()
+						+ " "
+						+ timeNode.getAttributes().getNamedItem(ZONE).getNodeValue()));
+			} catch (ParseException e) {
+				logger.warn("cannot parse date string: " + body, e);
+			}
+		}
 	}
 
 	private void calculateTotalRealPower(Device device) {

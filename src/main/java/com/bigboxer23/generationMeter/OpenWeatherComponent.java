@@ -62,7 +62,15 @@ public class OpenWeatherComponent {
 						JsonAdapter<List<Location>> jsonAdapter =
 								moshi.adapter(Types.newParameterizedType(List.class, Location.class));
 						Location location = Optional.ofNullable(jsonAdapter.fromJson(body))
-								.map(loc -> loc.isEmpty() ? null : loc.get(0))
+								.map(loc -> {
+									if (loc.isEmpty()) {
+										return null;
+									}
+									return loc.stream()
+											.filter(location1 -> state.equalsIgnoreCase(location1.getState()))
+											.findAny()
+											.orElse(null);
+								})
 								.orElse(null);
 						if (location != null) {
 							locationCache.put(city + state + countryCode, location);

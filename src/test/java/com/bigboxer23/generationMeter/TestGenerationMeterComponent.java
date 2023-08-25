@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
+import java.text.SimpleDateFormat;
 import javax.xml.xpath.XPathExpressionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,5 +95,19 @@ public class TestGenerationMeterComponent implements TestConstants {
 		component.getServers().getServers().add(server);
 		assertFalse(component.handleDeviceBody(device2XmlNull));
 		assertTrue(component.handleDeviceBody(device2Xml));
+	}
+
+	@Test
+	public void testDateRead() {
+		Device device = component.parseDeviceInformation(device2Xml, "site1", device2Name);
+		assertNotNull(device.getDate());
+		SimpleDateFormat sdf = new SimpleDateFormat(MeterConstants.DATE_PATTERN);
+		assertEquals(sdf.format(device.getDate()), "2020-08-21 12:30:00 CDT");
+		device = component.parseDeviceInformation(device2XmlNoDate, "site1", device2Name);
+		assertNull(device.getDate());
+		device = component.parseDeviceInformation(device2XmlBadDate, "site1", device2Name);
+		assertNull(device.getDate());
+		device = component.parseDeviceInformation(device2XmlNoTZ, "site1", device2Name);
+		assertNull(device.getDate());
 	}
 }
