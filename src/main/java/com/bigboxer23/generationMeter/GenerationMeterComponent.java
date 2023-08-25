@@ -175,7 +175,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.info("device was not valid, not handling");
 			return false;
 		}
-		openSearch.logData(new Date(), Collections.singletonList(device));
+		openSearch.logData(device.getDate() != null ? device.getDate() : new Date(), Collections.singletonList(device));
 		return true;
 	}
 
