@@ -85,7 +85,7 @@ public class GenerationMeterController implements MeterConstants {
 			requestBody = @RequestBody(description = "XML string content to parse"))
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
-		logger.info("received uploaded data: " + servletRequest.getRemoteAddr());
+		logger.info("Received upload request: " + servletRequest.getHeader("X-Forwarded-For"));
 		String authorization = servletRequest.getHeader("Authorization");
 		if (authorization == null || !authorization.startsWith("Basic ")) {
 			logger.warn("Missing authorization token.");
