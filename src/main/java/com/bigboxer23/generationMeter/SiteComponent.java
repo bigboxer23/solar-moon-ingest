@@ -2,12 +2,18 @@ package com.bigboxer23.generationMeter;
 
 import com.bigboxer23.generationMeter.data.Device;
 import com.bigboxer23.generationMeter.data.Server;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /** Component to stash all the logic related to aggregating virtual site devices */
@@ -18,56 +24,42 @@ public class SiteComponent {
 
 	private OpenSearchComponent openSearch;
 
-	public SiteComponent(OpenSearchComponent component) {
+	private GenerationMeterComponent component;
+
+	public SiteComponent(OpenSearchComponent component, GenerationMeterComponent generationComponent) {
 		openSearch = component;
+		this.component = generationComponent;
 	}
 
-	public void fillInSites(List<Server> sites, List<Device> devices, List<Server> servers) {
-		if (sites == null) {
+	@Scheduled(cron = "0 5,20,35,50 * * * ?")
+	public void handleSites() throws IOException {
+		component.loadConfig();
+		if (component.getServers().getSites() == null) {
+			logger.warn("handleSites:servers not configured, not doing anything");
 			return;
 		}
-		logger.debug("starting to fill in virtual devices");
+		LocalDateTime fetchDate =
+				LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).minusMinutes(5);
+		Date date = Date.from(fetchDate.atZone(ZoneId.systemDefault()).toInstant());
+		logger.info("Starting to fill in site devices");
 		List<Device> siteDevices = new ArrayList<>();
-		sites.forEach(site -> {
+		component.getServers().getSites().forEach(site -> {
 			logger.debug("adding virtual device " + site.getSite());
 			Device siteDevice = new Device(site.getName(), site.getName());
 			siteDevice.setIsVirtual();
 			siteDevices.add(siteDevice);
-			float totalEnergyConsumed = getPulledDeviceValues(devices, site, Device::getEnergyConsumed);
-			if (totalEnergyConsumed > -1) {
-				siteDevice.setEnergyConsumed(totalEnergyConsumed);
-			}
-			totalEnergyConsumed = getPushedDeviceValues(servers, site, Device::getEnergyConsumed);
+			float totalEnergyConsumed =
+					getPushedDeviceValues(component.getServers().getServers(), site, Device::getEnergyConsumed);
 			if (totalEnergyConsumed > -1) {
 				siteDevice.setEnergyConsumed(Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
 			}
-			float totalRealPower = getPulledDeviceValues(devices, site, Device::getTotalRealPower);
-			if (totalRealPower > -1) {
-				siteDevice.setTotalRealPower(totalRealPower);
-			}
-			totalRealPower = getPushedDeviceValues(servers, site, Device::getTotalRealPower);
+			float totalRealPower =
+					getPushedDeviceValues(component.getServers().getServers(), site, Device::getTotalRealPower);
 			if (totalRealPower > -1) {
 				siteDevice.setTotalRealPower(Math.max(0, siteDevice.getTotalRealPower()) + totalRealPower);
 			}
 		});
-		devices.addAll(siteDevices);
-	}
-
-	/**
-	 * Iterate our list of devices we've pulled to generate the site data
-	 *
-	 * @param devices
-	 * @param site
-	 * @param mapper
-	 * @return
-	 */
-	private float getPulledDeviceValues(List<Device> devices, Server site, Function<Device, Float> mapper) {
-		return devices.stream()
-				.filter(device -> device.getSite().equals(site.getName()))
-				.map(mapper)
-				.filter(energy -> energy >= 0)
-				.reduce(Float::sum)
-				.orElse(-1f);
+		openSearch.logData(date, siteDevices);
 	}
 
 	/**
@@ -82,7 +74,6 @@ public class SiteComponent {
 	private float getPushedDeviceValues(List<Server> servers, Server site, Function<Device, Float> mapper) {
 		return servers.stream()
 				.filter(device -> device.getSite().equals(site.getName()))
-				.filter(Server::isPushedDevice)
 				.map(server -> openSearch.getLastDeviceEntry(server.getName()))
 				.filter(Objects::nonNull)
 				.map(mapper)

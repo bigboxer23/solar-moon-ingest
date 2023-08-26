@@ -67,7 +67,7 @@ public class OpenWeatherComponent {
 										return null;
 									}
 									return loc.stream()
-											.filter(location1 -> state.equalsIgnoreCase(location1.getState()))
+											.filter(location1 -> location1.getState() != null)
 											.findAny()
 											.orElse(null);
 								})
