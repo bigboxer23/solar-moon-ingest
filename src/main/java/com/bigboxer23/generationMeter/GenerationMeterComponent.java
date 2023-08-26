@@ -16,6 +16,9 @@ import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
@@ -125,7 +128,8 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.warn("fetchData:servers not configured, not doing anything");
 			return;
 		}
-		Date fetchDate = new Date();
+		LocalDateTime fetchDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+		Date date = Date.from(fetchDate.atZone(ZoneId.systemDefault()).toInstant());
 		logger.info("Pulling devices");
 		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
@@ -133,7 +137,7 @@ public class GenerationMeterComponent implements MeterConstants {
 				devices.add(getDeviceInformation(server));
 			}
 		}
-		openSearch.logData(fetchDate, devices);
+		openSearch.logData(date, devices);
 		alarmComponent.fireAlarms(devices);
 		logger.info("end of fetch data");
 	}
