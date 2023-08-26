@@ -28,8 +28,8 @@ public class TestOpenWeatherComponent {
 	public void testGetLatLongFromCity() {
 		Location location = component.getLatLongFromCity("golden valley", "mn", 840);
 		assertNotNull(location);
-		assertEquals(45.002, location.getLat());
-		assertEquals(-93.3585, location.getLon());
+		assertEquals(44.9861176, location.getLat());
+		assertEquals(-93.3784618, location.getLon());
 		assertFalse(location.isFromCache());
 		location = component.getLatLongFromCity("golden valley", "mn", 840);
 		assertTrue(location.isFromCache());

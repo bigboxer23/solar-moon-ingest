@@ -70,21 +70,17 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
 
-	private SiteComponent siteComponent;
-
 	private String configFile;
 
 	public GenerationMeterComponent(
 			OpenSearchComponent openSearch,
 			@Qualifier("elasticComponent") ElasticComponent elastic,
 			AlarmComponent alarmComponent,
-			SiteComponent siteComponent,
 			Environment env)
 			throws IOException {
 		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
-		this.siteComponent = siteComponent;
 		configFile = env.getProperty("config.file");
 		loadConfig();
 	}
@@ -122,21 +118,21 @@ public class GenerationMeterComponent implements MeterConstants {
 	}
 
 	// @Scheduled(fixedDelay = 5000)
-	@Scheduled(cron = "${scheduler-time}")
+	@Scheduled(cron = "0 */15 * * * ?")
 	private void fetchData() throws IOException, XPathExpressionException {
 		loadConfig();
 		if (servers == null) {
+			logger.warn("fetchData:servers not configured, not doing anything");
 			return;
 		}
 		Date fetchDate = new Date();
-		logger.info("starting fetch of data");
+		logger.info("Pulling devices");
 		List<Device> devices = new ArrayList<>();
 		for (Server server : servers.getServers()) {
 			if (!server.isPushedDevice()) {
 				devices.add(getDeviceInformation(server));
 			}
 		}
-		siteComponent.fillInSites(servers.getSites(), devices, servers.getServers());
 		openSearch.logData(fetchDate, devices);
 		alarmComponent.fireAlarms(devices);
 		logger.info("end of fetch data");
