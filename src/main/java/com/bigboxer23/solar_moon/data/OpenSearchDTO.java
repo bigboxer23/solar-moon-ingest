@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter.data;
+package com.bigboxer23.solar_moon.data;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ public class OpenSearchDTO {
 	@JsonAnyGetter
 	Map<String, Object> attr = new HashMap<>();
 
-	public OpenSearchDTO(Device device) {
-		device.getAttributes().forEach((name, deviceAttributes) -> attr.put(name, deviceAttributes.getValue()));
+	public OpenSearchDTO(DeviceData deviceData) {
+		deviceData.getAttributes().forEach((name, deviceAttributes) -> attr.put(name, deviceAttributes.getValue()));
 	}
 }

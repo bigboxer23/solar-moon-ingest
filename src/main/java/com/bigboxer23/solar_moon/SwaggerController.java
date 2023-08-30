@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.stereotype.Controller;

@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 

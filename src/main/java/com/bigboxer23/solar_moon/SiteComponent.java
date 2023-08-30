@@ -1,7 +1,6 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Device;
-import com.bigboxer23.generationMeter.data.Server;
+import com.bigboxer23.solar_moon.data.DeviceData;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -11,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+
+import com.bigboxer23.solar_moon.data.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -42,19 +43,20 @@ public class SiteComponent {
 				LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).minusMinutes(5);
 		Date date = Date.from(fetchDate.atZone(ZoneId.systemDefault()).toInstant());
 		logger.info("Starting to fill in site devices");
-		List<Device> siteDevices = new ArrayList<>();
+		List<DeviceData> siteDevices = new ArrayList<>();
 		component.getServers().getSites().forEach(site -> {
 			logger.debug("adding virtual device " + site.getSite());
-			Device siteDevice = new Device(site.getName(), site.getName());
+			DeviceData siteDevice = new DeviceData(site.getName(), site.getName());
 			siteDevice.setIsVirtual();
 			siteDevices.add(siteDevice);
 			float totalEnergyConsumed =
-					getPushedDeviceValues(component.getServers().getServers(), site, Device::getEnergyConsumed);
+					getPushedDeviceValues(component.getServers().getServers(), site, DeviceData::getEnergyConsumed);
 			if (totalEnergyConsumed > -1) {
-				siteDevice.setEnergyConsumed(Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
+				siteDevice.setEnergyConsumed(
+						Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
 			}
 			float totalRealPower =
-					getPushedDeviceValues(component.getServers().getServers(), site, Device::getTotalRealPower);
+					getPushedDeviceValues(component.getServers().getServers(), site, DeviceData::getTotalRealPower);
 			if (totalRealPower > -1) {
 				siteDevice.setTotalRealPower(Math.max(0, siteDevice.getTotalRealPower()) + totalRealPower);
 			}
@@ -71,7 +73,7 @@ public class SiteComponent {
 	 * @param mapper
 	 * @return
 	 */
-	private float getPushedDeviceValues(List<Server> servers, Server site, Function<Device, Float> mapper) {
+	private float getPushedDeviceValues(List<Device> servers, Device site, Function<DeviceData, Float> mapper) {
 		return servers.stream()
 				.filter(device -> device.getSite().equals(site.getName()))
 				.map(server -> openSearch.getLastDeviceEntry(server.getName()))

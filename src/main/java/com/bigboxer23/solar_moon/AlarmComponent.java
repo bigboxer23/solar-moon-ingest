@@ -1,7 +1,7 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Device;
-import com.bigboxer23.generationMeter.data.WeatherSystemData;
+import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.data.WeatherSystemData;
 import java.io.IOException;
 import java.util.List;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ public class AlarmComponent {
 		this.openWeatherComponent = openWeatherComponent;
 	}
 
-	public void fireAlarms(List<Device> devices) throws IOException {
+	public void fireAlarms(List<DeviceData> deviceData) throws IOException {
 		logger.debug("checking alarms");
 		// TODO: criteria for actually firing
 		WeatherSystemData sunriseSunset =

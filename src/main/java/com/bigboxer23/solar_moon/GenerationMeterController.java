@@ -1,6 +1,6 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Server;
+import com.bigboxer23.solar_moon.data.Device;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -68,7 +68,7 @@ public class GenerationMeterController implements MeterConstants {
 	public boolean validateDeviceInformation(
 			String type, String url, String user, String pw, HttpServletResponse servletResponse) {
 		try {
-			Server server = new Server();
+			Device server = new Device();
 			server.setUser(user);
 			server.setPassword(pw);
 			server.setAddress(url);

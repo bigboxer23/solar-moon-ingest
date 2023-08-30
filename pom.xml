@@ -107,7 +107,11 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.bigboxer23</groupId>
+      <artifactId>solar-moon-common</artifactId>
+      <version>1.0.1</version>
+    </dependency>
   </dependencies>
   <repositories>
     <repository>

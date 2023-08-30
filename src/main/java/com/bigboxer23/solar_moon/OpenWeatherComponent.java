@@ -1,8 +1,8 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Location;
-import com.bigboxer23.generationMeter.data.WeatherData;
-import com.bigboxer23.generationMeter.data.WeatherSystemData;
+import com.bigboxer23.solar_moon.data.Location;
+import com.bigboxer23.solar_moon.data.WeatherData;
+import com.bigboxer23.solar_moon.data.WeatherSystemData;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

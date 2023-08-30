@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 /** */
 public interface TestConstants {

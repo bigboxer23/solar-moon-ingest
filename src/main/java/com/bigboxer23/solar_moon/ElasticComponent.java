@@ -1,6 +1,6 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Device;
+import com.bigboxer23.solar_moon.data.DeviceData;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Date;
@@ -31,10 +31,10 @@ public class ElasticComponent {
 
 	private static final String TYPE = "Status";
 
-	public void logData(Date fetchDate, List<Device> devices) {
+	public void logData(Date fetchDate, List<DeviceData> deviceData) {
 		logger.debug("sending to elastic component");
 		BulkRequest bulkRequest = new BulkRequest();
-		devices.forEach(device -> {
+		deviceData.forEach(device -> {
 			Map<String, Object> document = new HashMap<>();
 			device.getAttributes().forEach((name, attr) -> document.put(attr.getName(), attr.getValue()));
 			document.put("@timestamp", fetchDate);

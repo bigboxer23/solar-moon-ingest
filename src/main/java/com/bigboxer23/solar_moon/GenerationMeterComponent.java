@@ -1,9 +1,9 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Device;
-import com.bigboxer23.generationMeter.data.DeviceAttribute;
-import com.bigboxer23.generationMeter.data.Server;
-import com.bigboxer23.generationMeter.data.Servers;
+import com.bigboxer23.solar_moon.data.DeviceAttribute;
+import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.data.Servers;
+import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import com.squareup.moshi.JsonEncodingException;
@@ -131,18 +131,18 @@ public class GenerationMeterComponent implements MeterConstants {
 		LocalDateTime fetchDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
 		Date date = Date.from(fetchDate.atZone(ZoneId.systemDefault()).toInstant());
 		logger.info("Pulling devices");
-		List<Device> devices = new ArrayList<>();
-		for (Server server : servers.getServers()) {
+		List<DeviceData> aDeviceData = new ArrayList<>();
+		for (Device server : servers.getServers()) {
 			if (!server.isPushedDevice()) {
-				devices.add(getDeviceInformation(server));
+				aDeviceData.add(getDeviceInformation(server));
 			}
 		}
-		openSearch.logData(date, devices);
-		alarmComponent.fireAlarms(devices);
+		openSearch.logData(date, aDeviceData);
+		alarmComponent.fireAlarms(aDeviceData);
 		logger.info("end of fetch data");
 	}
 
-	public Device getDeviceInformation(Server server) throws XPathExpressionException, IOException {
+	public DeviceData getDeviceInformation(Device server) throws XPathExpressionException, IOException {
 		if (server == null || server.isPushedDevice()) {
 			logger.warn("server or user or pw is null, cannot fetch data: " + server);
 			return null;
@@ -166,16 +166,18 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
 			return false;
 		}
-		Device device = Optional.ofNullable(findDeviceName(body))
-				.map(this::findServerFromDeviceName)
+		DeviceData aDeviceData = Optional.ofNullable(findDeviceName(body))
+				.map(this::findDeviceFromDeviceName)
 				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
-				.filter(Device::isValid)
+				.filter(DeviceData::isValid)
 				.orElse(null);
-		if (device == null) {
+		if (aDeviceData == null) {
 			logger.info("device was not valid, not handling");
 			return false;
 		}
-		openSearch.logData(device.getDate() != null ? device.getDate() : new Date(), Collections.singletonList(device));
+		openSearch.logData(
+				aDeviceData.getDate() != null ? aDeviceData.getDate() : new Date(),
+				Collections.singletonList(aDeviceData));
 		return true;
 	}
 
@@ -195,7 +197,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		return nodes.getLength() > 0 ? nodes.item(0).getTextContent() : null;
 	}
 
-	private Server findServerFromDeviceName(String deviceName) {
+	private Device findDeviceFromDeviceName(String deviceName) {
 		if (servers == null || deviceName == null || deviceName.isBlank()) {
 			logger.warn("server or device is null, can't find");
 			return null;
@@ -210,13 +212,13 @@ public class GenerationMeterComponent implements MeterConstants {
 				});
 	}
 
-	protected Device parseDeviceInformation(String body, String site, String name) {
+	protected DeviceData parseDeviceInformation(String body, String site, String name) {
 		try {
 			logger.debug("parsing device info " + site + ":" + name + "\n" + body);
 			InputSource xml = new InputSource(new StringReader(body));
 			NodeList nodes = (NodeList)
 					XPathFactory.newInstance().newXPath().compile(POINT_PATH).evaluate(xml, XPathConstants.NODESET);
-			Device device = new Device(site, name);
+			DeviceData aDeviceData = new DeviceData(site, name);
 			for (int i = 0; i < nodes.getLength(); i++) {
 				String attributeName =
 						nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
@@ -226,7 +228,7 @@ public class GenerationMeterComponent implements MeterConstants {
 								.getAttributes()
 								.getNamedItem("value")
 								.getNodeValue());
-						device.addAttribute(new DeviceAttribute(
+						aDeviceData.addAttribute(new DeviceAttribute(
 								fields.get(attributeName),
 								nodes.item(i)
 										.getAttributes()
@@ -238,17 +240,17 @@ public class GenerationMeterComponent implements MeterConstants {
 					}
 				}
 			}
-			calculateTotalRealPower(device);
-			calculateTotalEnergyConsumed(device);
-			calculateTime(device, body);
-			return device;
+			calculateTotalRealPower(aDeviceData);
+			calculateTotalEnergyConsumed(aDeviceData);
+			calculateTime(aDeviceData, body);
+			return aDeviceData;
 		} catch (XPathExpressionException e) {
 			logger.error("parseDeviceInformation", e);
 		}
 		return null;
 	}
 
-	private void calculateTime(Device device, String body) throws XPathExpressionException {
+	private void calculateTime(DeviceData deviceData, String body) throws XPathExpressionException {
 		InputSource xml = new InputSource(new StringReader(body));
 		NodeList nodes = (NodeList)
 				XPathFactory.newInstance().newXPath().compile(DATE_PATH).evaluate(xml, XPathConstants.NODESET);
@@ -262,7 +264,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			}
 			SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
 			try {
-				device.setDate(sdf.parse(timeNode.getTextContent()
+				deviceData.setDate(sdf.parse(timeNode.getTextContent()
 						+ " "
 						+ timeNode.getAttributes().getNamedItem(ZONE).getNodeValue()));
 			} catch (ParseException e) {
@@ -271,28 +273,30 @@ public class GenerationMeterComponent implements MeterConstants {
 		}
 	}
 
-	private void calculateTotalRealPower(Device device) {
-		if (device.getTotalRealPower() != -1) {
+	private void calculateTotalRealPower(DeviceData deviceData) {
+		if (deviceData.getTotalRealPower() != -1) {
 			logger.debug("Value already exists, not calculating");
 			return;
 		}
-		if (device.getAverageVoltage() == -1 || device.getAverageCurrent() == -1 || device.getPowerFactor() == -1) {
+		if (deviceData.getAverageVoltage() == -1
+				|| deviceData.getAverageCurrent() == -1
+				|| deviceData.getPowerFactor() == -1) {
 			logger.info("missing required values to calculate real power "
-					+ device.getName()
+					+ deviceData.getName()
 					+ " "
-					+ device.getAverageVoltage()
+					+ deviceData.getAverageVoltage()
 					+ ","
-					+ device.getAverageCurrent()
+					+ deviceData.getAverageCurrent()
 					+ ","
-					+ device.getPowerFactor());
+					+ deviceData.getPowerFactor());
 			return;
 		}
-		double rp = (device.getAverageVoltage()
-						* device.getAverageCurrent()
-						* Math.abs(device.getPowerFactor() / 100)
+		double rp = (deviceData.getAverageVoltage()
+						* deviceData.getAverageCurrent()
+						* Math.abs(deviceData.getPowerFactor() / 100)
 						* Math.sqrt(3))
 				/ 1000f;
-		device.setTotalRealPower(
+		deviceData.setTotalRealPower(
 				new BigDecimal(rp).setScale(1, RoundingMode.HALF_UP).floatValue());
 	}
 
@@ -303,22 +307,22 @@ public class GenerationMeterComponent implements MeterConstants {
 	 * @param serverName
 	 * @param attr
 	 */
-	private void calculateTotalEnergyConsumed(Device device) {
-		if (device.getName() == null) {
+	private void calculateTotalEnergyConsumed(DeviceData deviceData) {
+		if (deviceData.getName() == null) {
 			logger.info("Can't calc total energy w/o device name");
 			return;
 		}
-		logger.debug("calculating total energy consumed. " + device.getName());
-		float totalEnergyConsumption = device.getTotalEnergyConsumed();
+		logger.debug("calculating total energy consumed. " + deviceData.getName());
+		float totalEnergyConsumption = deviceData.getTotalEnergyConsumed();
 		if (totalEnergyConsumption < 0) {
 			return;
 		}
 		Float previousTotalEnergyConsumed = deviceTotalEnergyConsumed.computeIfAbsent(
-				device.getName(), name -> openSearch.getTotalEnergyConsumed(device.getName()));
+				deviceData.getName(), name -> openSearch.getTotalEnergyConsumed(deviceData.getName()));
 		if (previousTotalEnergyConsumed != null) {
-			device.setEnergyConsumed(totalEnergyConsumption - previousTotalEnergyConsumed);
+			deviceData.setEnergyConsumed(totalEnergyConsumption - previousTotalEnergyConsumed);
 		}
-		deviceTotalEnergyConsumed.put(device.getName(), totalEnergyConsumption);
+		deviceTotalEnergyConsumed.put(deviceData.getName(), totalEnergyConsumption);
 	}
 
 	private RequestBuilderCallback getAuthCallback(String user, String pass) {

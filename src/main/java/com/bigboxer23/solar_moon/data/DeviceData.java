@@ -1,6 +1,6 @@
-package com.bigboxer23.generationMeter.data;
+package com.bigboxer23.solar_moon.data;
 
-import static com.bigboxer23.generationMeter.MeterConstants.*;
+import static com.bigboxer23.solar_moon.MeterConstants.*;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -10,13 +10,13 @@ import lombok.Data;
 
 /** */
 @Data
-public class Device {
+public class DeviceData {
 
 	private Map<String, DeviceAttribute> attributes;
 
 	private Date date;
 
-	public Device(Map<String, Object> openSearchMap) {
+	public DeviceData(Map<String, Object> openSearchMap) {
 		this((String) openSearchMap.get("site"), (String) openSearchMap.get("device-name"));
 		setTotalRealPower(doubleToFloat(openSearchMap.get(TOTAL_REAL_POWER)));
 		setEnergyConsumed(doubleToFloat(openSearchMap.get(ENG_CONS)));
@@ -40,7 +40,7 @@ public class Device {
 				.orElse(null);
 	}
 
-	public Device(String site, String name) {
+	public DeviceData(String site, String name) {
 		attributes = new HashMap<>();
 		attributes.put("site", new DeviceAttribute("site", "", site));
 		attributes.put(DEVICE_NAME, new DeviceAttribute(DEVICE_NAME, "", name));

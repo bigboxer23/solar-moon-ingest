@@ -1,8 +1,8 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.Device;
-import com.bigboxer23.generationMeter.data.DeviceAttribute;
-import com.bigboxer23.generationMeter.data.OpenSearchDTO;
+import com.bigboxer23.solar_moon.data.DeviceAttribute;
+import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.data.OpenSearchDTO;
 import java.io.IOException;
 import java.util.*;
 import org.apache.http.HttpHost;
@@ -54,14 +54,14 @@ public class OpenSearchComponent extends ElasticComponent {
 		isTest = Boolean.parseBoolean(env.getProperty("testing"));
 	}
 
-	public void logData(Date fetchDate, List<Device> devices) {
+	public void logData(Date fetchDate, List<DeviceData> deviceData) {
 		if (isTest) {
 			logger.info("not running, test is active.");
 			return;
 		}
 		logger.debug("sending to opensearch component");
 		BulkRequest.Builder bulkRequest = new BulkRequest.Builder().index(INDEX_NAME);
-		devices.forEach(device -> {
+		deviceData.forEach(device -> {
 			device.addAttribute(new DeviceAttribute(TIMESTAMP, null, fetchDate));
 			bulkRequest.operations(new BulkOperation.Builder()
 					.index(new IndexOperation.Builder<OpenSearchDTO>()
@@ -125,7 +125,7 @@ public class OpenSearchComponent extends ElasticComponent {
 		}
 	}
 
-	public Device getLastDeviceEntry(String deviceName) {
+	public DeviceData getLastDeviceEntry(String deviceName) {
 		try {
 			SearchRequest request = new SearchRequest.Builder()
 					.index(Collections.singletonList(INDEX_NAME))
@@ -161,7 +161,7 @@ public class OpenSearchComponent extends ElasticComponent {
 				logger.warn("No fields associated with result for " + deviceName);
 				return null;
 			}
-			return new Device(fields);
+			return new DeviceData(fields);
 		} catch (IOException e) {
 			logger.error("getTotalEnergyConsumed:", e);
 			return null;
