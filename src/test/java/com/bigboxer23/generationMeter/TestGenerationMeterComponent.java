@@ -3,13 +3,14 @@ package com.bigboxer23.generationMeter;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.bigboxer23.generationMeter.data.DeviceData;
-import com.bigboxer23.generationMeter.data.Server;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import javax.xml.xpath.XPathExpressionException;
+
+import com.bigboxer23.solar_moon.data.Device;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,7 +90,7 @@ public class TestGenerationMeterComponent implements TestConstants {
 		assertFalse(component.handleDeviceBody(nonUpdateStatus));
 		assertFalse(component.handleDeviceBody(device2XmlNull));
 		assertFalse(component.handleDeviceBody(device2Xml));
-		Server server = new Server();
+		Device server = new Device();
 		server.setName(device2Name);
 		server.setDeviceName(device2Name);
 		component.getServers().getServers().add(server);

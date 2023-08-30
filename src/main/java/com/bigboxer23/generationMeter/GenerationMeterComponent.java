@@ -2,8 +2,8 @@ package com.bigboxer23.generationMeter;
 
 import com.bigboxer23.generationMeter.data.DeviceAttribute;
 import com.bigboxer23.generationMeter.data.DeviceData;
-import com.bigboxer23.generationMeter.data.Server;
 import com.bigboxer23.generationMeter.data.Servers;
+import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import com.squareup.moshi.JsonEncodingException;
@@ -132,7 +132,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		Date date = Date.from(fetchDate.atZone(ZoneId.systemDefault()).toInstant());
 		logger.info("Pulling devices");
 		List<DeviceData> aDeviceData = new ArrayList<>();
-		for (Server server : servers.getServers()) {
+		for (Device server : servers.getServers()) {
 			if (!server.isPushedDevice()) {
 				aDeviceData.add(getDeviceInformation(server));
 			}
@@ -142,7 +142,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		logger.info("end of fetch data");
 	}
 
-	public DeviceData getDeviceInformation(Server server) throws XPathExpressionException, IOException {
+	public DeviceData getDeviceInformation(Device server) throws XPathExpressionException, IOException {
 		if (server == null || server.isPushedDevice()) {
 			logger.warn("server or user or pw is null, cannot fetch data: " + server);
 			return null;
@@ -167,7 +167,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			return false;
 		}
 		DeviceData aDeviceData = Optional.ofNullable(findDeviceName(body))
-				.map(this::findServerFromDeviceName)
+				.map(this::findDeviceFromDeviceName)
 				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
 				.filter(DeviceData::isValid)
 				.orElse(null);
@@ -197,7 +197,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		return nodes.getLength() > 0 ? nodes.item(0).getTextContent() : null;
 	}
 
-	private Server findServerFromDeviceName(String deviceName) {
+	private Device findDeviceFromDeviceName(String deviceName) {
 		if (servers == null || deviceName == null || deviceName.isBlank()) {
 			logger.warn("server or device is null, can't find");
 			return null;
