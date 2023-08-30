@@ -1,7 +1,7 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.DeviceData;
-import com.bigboxer23.generationMeter.data.WeatherSystemData;
+import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.data.WeatherSystemData;
 import java.io.IOException;
 import java.util.List;
 import org.slf4j.Logger;

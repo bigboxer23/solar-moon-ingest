@@ -1,8 +1,8 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.bigboxer23.generationMeter.data.DeviceData;
+import com.bigboxer23.solar_moon.data.DeviceData;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

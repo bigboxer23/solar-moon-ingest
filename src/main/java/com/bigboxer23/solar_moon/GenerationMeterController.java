@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 import com.bigboxer23.solar_moon.data.Device;
 import io.swagger.v3.oas.annotations.Operation;

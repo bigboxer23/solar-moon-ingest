@@ -1,9 +1,9 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.bigboxer23.generationMeter.data.Location;
-import com.bigboxer23.generationMeter.data.WeatherSystemData;
+import com.bigboxer23.solar_moon.data.Location;
+import com.bigboxer23.solar_moon.data.WeatherSystemData;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;

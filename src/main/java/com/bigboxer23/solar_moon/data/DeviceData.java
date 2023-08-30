@@ -1,6 +1,6 @@
-package com.bigboxer23.generationMeter.data;
+package com.bigboxer23.solar_moon.data;
 
-import static com.bigboxer23.generationMeter.MeterConstants.*;
+import static com.bigboxer23.solar_moon.MeterConstants.*;
 
 import java.util.Date;
 import java.util.HashMap;

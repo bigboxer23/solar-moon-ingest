@@ -1,8 +1,8 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.generationMeter.data.DeviceAttribute;
-import com.bigboxer23.generationMeter.data.DeviceData;
-import com.bigboxer23.generationMeter.data.Servers;
+import com.bigboxer23.solar_moon.data.DeviceAttribute;
+import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.data.Servers;
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;

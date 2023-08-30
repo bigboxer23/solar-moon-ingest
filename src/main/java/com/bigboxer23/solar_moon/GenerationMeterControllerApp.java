@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter;
+package com.bigboxer23.solar_moon;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;

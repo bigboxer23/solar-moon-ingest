@@ -1,4 +1,4 @@
-package com.bigboxer23.generationMeter.data;
+package com.bigboxer23.solar_moon.data;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import java.util.HashMap;

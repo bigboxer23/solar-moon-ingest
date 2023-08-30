@@ -1,8 +1,7 @@
-package com.bigboxer23.generationMeter.data;
+package com.bigboxer23.solar_moon.data;
 
 import java.util.List;
 
-import com.bigboxer23.solar_moon.data.Device;
 import lombok.Data;
 
 /** */
