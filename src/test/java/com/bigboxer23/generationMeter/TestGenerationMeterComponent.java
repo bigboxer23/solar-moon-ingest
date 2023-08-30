@@ -2,7 +2,7 @@ package com.bigboxer23.generationMeter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.bigboxer23.generationMeter.data.Device;
+import com.bigboxer23.generationMeter.data.DeviceData;
 import com.bigboxer23.generationMeter.data.Server;
 import java.io.File;
 import java.io.IOException;
@@ -64,20 +64,20 @@ public class TestGenerationMeterComponent implements TestConstants {
 
 	@Test
 	public void testCalculatedTotalRealPower() {
-		Device device2 = component.parseDeviceInformation(device2Xml, "site1", device2Name);
-		assertEquals(device2.getTotalRealPower(), 422.7f);
-		device2.setPowerFactor(-device2.getPowerFactor());
-		assertEquals(device2.getTotalRealPower(), 422.7f);
+		DeviceData aDeviceData2 = component.parseDeviceInformation(device2Xml, "site1", device2Name);
+		assertEquals(aDeviceData2.getTotalRealPower(), 422.7f);
+		aDeviceData2.setPowerFactor(-aDeviceData2.getPowerFactor());
+		assertEquals(aDeviceData2.getTotalRealPower(), 422.7f);
 	}
 
 	@Test
 	public void testParseDeviceInformation() {
-		Device device = component.parseDeviceInformation(device2XmlNull, "site1", device2Name);
-		assertNotNull(device);
-		assertFalse(device.isValid());
-		device = component.parseDeviceInformation(device2Xml, "site1", device2Name);
-		assertNotNull(device);
-		assertTrue(device.isValid());
+		DeviceData aDeviceData = component.parseDeviceInformation(device2XmlNull, "site1", device2Name);
+		assertNotNull(aDeviceData);
+		assertFalse(aDeviceData.isValid());
+		aDeviceData = component.parseDeviceInformation(device2Xml, "site1", device2Name);
+		assertNotNull(aDeviceData);
+		assertTrue(aDeviceData.isValid());
 		assertNull(component.parseDeviceInformation(device2Name, device2Name, device2Name));
 	}
 
@@ -99,15 +99,15 @@ public class TestGenerationMeterComponent implements TestConstants {
 
 	@Test
 	public void testDateRead() {
-		Device device = component.parseDeviceInformation(device2Xml, "site1", device2Name);
-		assertNotNull(device.getDate());
+		DeviceData aDeviceData = component.parseDeviceInformation(device2Xml, "site1", device2Name);
+		assertNotNull(aDeviceData.getDate());
 		SimpleDateFormat sdf = new SimpleDateFormat(MeterConstants.DATE_PATTERN);
-		assertEquals(sdf.format(device.getDate()), "2020-08-21 12:30:00 CDT");
-		device = component.parseDeviceInformation(device2XmlNoDate, "site1", device2Name);
-		assertNull(device.getDate());
-		device = component.parseDeviceInformation(device2XmlBadDate, "site1", device2Name);
-		assertNull(device.getDate());
-		device = component.parseDeviceInformation(device2XmlNoTZ, "site1", device2Name);
-		assertNull(device.getDate());
+		assertEquals(sdf.format(aDeviceData.getDate()), "2020-08-21 12:30:00 CDT");
+		aDeviceData = component.parseDeviceInformation(device2XmlNoDate, "site1", device2Name);
+		assertNull(aDeviceData.getDate());
+		aDeviceData = component.parseDeviceInformation(device2XmlBadDate, "site1", device2Name);
+		assertNull(aDeviceData.getDate());
+		aDeviceData = component.parseDeviceInformation(device2XmlNoTZ, "site1", device2Name);
+		assertNull(aDeviceData.getDate());
 	}
 }

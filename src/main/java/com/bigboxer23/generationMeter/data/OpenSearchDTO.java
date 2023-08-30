@@ -9,7 +9,7 @@ public class OpenSearchDTO {
 	@JsonAnyGetter
 	Map<String, Object> attr = new HashMap<>();
 
-	public OpenSearchDTO(Device device) {
-		device.getAttributes().forEach((name, deviceAttributes) -> attr.put(name, deviceAttributes.getValue()));
+	public OpenSearchDTO(DeviceData deviceData) {
+		deviceData.getAttributes().forEach((name, deviceAttributes) -> attr.put(name, deviceAttributes.getValue()));
 	}
 }
