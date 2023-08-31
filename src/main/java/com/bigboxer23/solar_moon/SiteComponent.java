@@ -1,5 +1,6 @@
 package com.bigboxer23.solar_moon;
 
+import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -10,8 +11,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-
-import com.bigboxer23.solar_moon.data.Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -52,8 +51,7 @@ public class SiteComponent {
 			float totalEnergyConsumed =
 					getPushedDeviceValues(component.getServers().getServers(), site, DeviceData::getEnergyConsumed);
 			if (totalEnergyConsumed > -1) {
-				siteDevice.setEnergyConsumed(
-						Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
+				siteDevice.setEnergyConsumed(Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
 			}
 			float totalRealPower =
 					getPushedDeviceValues(component.getServers().getServers(), site, DeviceData::getTotalRealPower);
