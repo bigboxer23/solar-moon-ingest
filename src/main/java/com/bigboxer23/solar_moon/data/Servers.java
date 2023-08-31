@@ -1,7 +1,6 @@
 package com.bigboxer23.solar_moon.data;
 
 import java.util.List;
-
 import lombok.Data;
 
 /** */

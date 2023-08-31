@@ -80,6 +80,13 @@ public class GenerationMeterController implements MeterConstants {
 		return false;
 	}
 
+	@Operation(summary = "Trigger sending xml config content to configuration server.")
+	@GetMapping(value = "sendXMLToConfigurationServer")
+	public ResponseEntity<Boolean> sendXMLToConfigurationServer() {
+		component.sendXMLToConfigurationServer();
+		return new ResponseEntity<>(true, HttpStatus.OK);
+	}
+
 	@Operation(
 			summary = "Endpoint to post xml content to body for parsing into device data",
 			requestBody = @RequestBody(description = "XML string content to parse"))

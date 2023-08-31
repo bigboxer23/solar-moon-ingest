@@ -2,6 +2,7 @@ package com.bigboxer23.solar_moon;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import java.io.File;
 import java.io.IOException;
@@ -9,8 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import javax.xml.xpath.XPathExpressionException;
-
-import com.bigboxer23.solar_moon.data.Device;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

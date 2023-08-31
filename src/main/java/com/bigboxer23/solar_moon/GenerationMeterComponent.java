@@ -1,9 +1,9 @@
 package com.bigboxer23.solar_moon;
 
+import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceAttribute;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.data.Servers;
-import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import com.squareup.moshi.JsonEncodingException;
@@ -22,6 +22,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import javax.xml.xpath.*;
 import okhttp3.Credentials;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -75,6 +77,8 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private String configFile;
 
+	private String configServer;
+
 	public GenerationMeterComponent(
 			OpenSearchComponent openSearch,
 			@Qualifier("elasticComponent") ElasticComponent elastic,
@@ -85,6 +89,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
 		configFile = env.getProperty("config.file");
+		configServer = env.getProperty("config.server");
 		loadConfig();
 	}
 
@@ -118,6 +123,27 @@ public class GenerationMeterComponent implements MeterConstants {
 	protected void resetLoadedConfig() {
 		servers = null;
 		serversLastMod = -1;
+	}
+
+	protected void sendXMLToConfigurationServer() {
+		servers.getServers().forEach(this::callConfigDeviceAPI);
+		servers.getSites().forEach(device -> {
+			device.setVirtual(true);
+			callConfigDeviceAPI(device);
+		});
+	}
+
+	private void callConfigDeviceAPI(Device device) {
+		try (Response response = OkHttpUtil.putSynchronous(
+				configServer + "/device",
+				RequestBody.create(moshi.adapter(Device.class).toJson(device), MediaType.parse("application/json")),
+				null)) {
+			if (!response.isSuccessful()) {
+				logger.warn("response was not successful: " + response.message() + " " + response.code());
+			}
+		} catch (IOException e) {
+			logger.warn("sendXMLToConfigurationServer " + device, e);
+		}
 	}
 
 	// @Scheduled(fixedDelay = 5000)
