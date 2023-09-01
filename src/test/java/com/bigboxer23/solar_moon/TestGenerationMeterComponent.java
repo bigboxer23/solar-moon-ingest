@@ -4,15 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import javax.xml.xpath.XPathExpressionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
@@ -23,18 +19,10 @@ public class TestGenerationMeterComponent implements TestConstants {
 	@Autowired
 	private GenerationMeterComponent component;
 
-	@Value("${config.file}")
-	private String configFileName;
-
 	@Test
-	public void testLoadConfig() throws IOException {
+	public void testLoadConfig() {
 		assertFalse(component.loadConfig());
-		// test modification
-		File file = new File(System.getProperty("user.dir") + File.separator + configFileName);
-		long timeMillis = System.currentTimeMillis();
-		FileTime accessFileTime = FileTime.fromMillis(timeMillis);
-		Files.setAttribute(file.toPath(), "lastAccessTime", accessFileTime);
-		file.setLastModified(timeMillis);
+		component.resetLoadedConfig();
 		assertTrue(component.loadConfig());
 		assertFalse(component.loadConfig());
 	}

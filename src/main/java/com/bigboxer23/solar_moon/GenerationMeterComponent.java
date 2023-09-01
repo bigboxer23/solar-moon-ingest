@@ -6,14 +6,11 @@ import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.data.Servers;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
-import com.squareup.moshi.JsonEncodingException;
 import com.squareup.moshi.Moshi;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -25,7 +22,6 @@ import okhttp3.Credentials;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,6 +36,7 @@ import org.xml.sax.InputSource;
 @Component
 public class GenerationMeterComponent implements MeterConstants {
 
+	private static final int CONFIG_CACHE_TIME = 5 * 60 * 1000; // 5m
 	private static final Map<String, String> fields = new HashMap<>();
 
 	static {
@@ -75,49 +72,40 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private Map<String, Float> deviceTotalEnergyConsumed = new HashMap<>();
 
-	private String configFile;
-
 	private String configServer;
+
+	private DeviceComponent deviceComponent;
 
 	public GenerationMeterComponent(
 			OpenSearchComponent openSearch,
 			@Qualifier("elasticComponent") ElasticComponent elastic,
 			AlarmComponent alarmComponent,
-			Environment env)
-			throws IOException {
+			DeviceComponent deviceComponent,
+			Environment env) {
 		this.openSearch = openSearch;
 		this.elastic = elastic;
 		this.alarmComponent = alarmComponent;
-		configFile = env.getProperty("config.file");
+		this.deviceComponent = deviceComponent;
 		configServer = env.getProperty("config.server");
 		loadConfig();
 	}
 
-	protected boolean loadConfig() throws IOException {
-		logger.debug("reading config file");
-		File config = new File(System.getProperty("user.dir") + File.separator + configFile);
-		if (!config.exists()) {
-			logger.warn("no "
-					+ (System.getProperty("user.dir") + File.separator + configFile)
-					+ " file exists, not doing anything");
-			resetLoadedConfig();
+	protected boolean loadConfig() {
+		if (servers != null && serversLastMod + CONFIG_CACHE_TIME > System.currentTimeMillis()) {
+			logger.debug("using cached config values");
 			return false;
 		}
-		if (servers == null || serversLastMod < config.lastModified()) {
-			logger.info("Config changed, reading config from file");
-			try {
-				servers = moshi.adapter(Servers.class)
-						.fromJson(FileUtils.readFileToString(config, Charset.defaultCharset())
-								.trim());
-				serversLastMod = config.lastModified();
-			} catch (JsonEncodingException e) {
-				logger.error("invalid json.\n\n" + FileUtils.readFileToString(config, Charset.defaultCharset()), e);
-				resetLoadedConfig();
-				return false;
-			}
-			return true;
-		}
-		return false;
+		logger.info("fetching config from db");
+		Servers tempServers = new Servers();
+		tempServers.setServers(new ArrayList<>());
+		tempServers.setSites(new ArrayList<>());
+		deviceComponent.getDeviceTable().scan().items().forEach(device -> (device.isVirtual()
+						? tempServers.getSites()
+						: tempServers.getServers())
+				.add(device));
+		servers = tempServers;
+		serversLastMod = System.currentTimeMillis();
+		return true;
 	}
 
 	protected void resetLoadedConfig() {
