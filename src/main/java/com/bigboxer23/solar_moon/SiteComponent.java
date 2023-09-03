@@ -40,10 +40,10 @@ public class SiteComponent {
 	}
 
 	public void handleSite(Device site) {
-		logger.debug("checking virtual device " + site.getSite());
+		logger.debug("checking virtual device " + site.getName());
 		DeviceData siteData = openSearch.getLastDeviceEntry(site.getName());
 		if (siteData != null) {
-			logger.debug("virtual device already exists " + site.getSite());
+			logger.debug("virtual device already exists " + site.getName());
 			return;
 		}
 		List<DeviceData> siteDevices = new ArrayList<>();
@@ -52,7 +52,7 @@ public class SiteComponent {
 				.toList()) {
 			DeviceData data = openSearch.getLastDeviceEntry(device.getName());
 			if (data == null) {
-				logger.debug("missing device for virtual device " + site.getSite() + " " + device.getName());
+				logger.debug("missing device for virtual device " + site.getName() + " " + device.getName());
 				return;
 			}
 			siteDevices.add(data);
@@ -67,7 +67,7 @@ public class SiteComponent {
 		if (totalRealPower > -1) {
 			siteDevice.setTotalRealPower(Math.max(0, siteDevice.getTotalRealPower()) + totalRealPower);
 		}
-		logger.info("adding virtual device " + site.getSite());
+		logger.info("adding virtual device " + site.getName());
 		openSearch.logData(get15mRoundedDate(), Collections.singletonList(siteDevice));
 	}
 
