@@ -153,7 +153,7 @@ public class OpenSearchComponent extends ElasticComponent {
 					.build();
 			SearchResponse<Map> response = getClient().search(request, Map.class);
 			if (response.hits().hits().isEmpty()) {
-				logger.warn("couldn't find previous value for " + deviceName);
+				logger.debug("couldn't find previous value for " + deviceName);
 				return null;
 			}
 			Map<String, Object> fields = response.hits().hits().get(0).source();
@@ -163,7 +163,7 @@ public class OpenSearchComponent extends ElasticComponent {
 			}
 			return new DeviceData(fields);
 		} catch (IOException e) {
-			logger.error("getTotalEnergyConsumed:", e);
+			logger.error("getLastDeviceEntry:", e);
 			return null;
 		}
 	}
