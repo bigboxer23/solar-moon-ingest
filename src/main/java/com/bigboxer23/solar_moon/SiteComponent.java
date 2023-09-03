@@ -2,14 +2,10 @@ package com.bigboxer23.solar_moon;
 
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,37 +27,62 @@ public class SiteComponent {
 		this.component = generationComponent;
 	}
 
-	@Scheduled(cron = "0 5,20,35,50 * * * ?")
-	public void handleSites() throws IOException {
+	@Scheduled(fixedDelay = 180000) // 3 min
+	// @Scheduled(cron = "0 5,20,35,50 * * * ?")
+	public void handleSites() {
 		component.loadConfig();
 		if (component.getServers().getSites() == null) {
 			logger.warn("handleSites:servers not configured, not doing anything");
 			return;
 		}
-		LocalDateTime fetchDate =
-				LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).minusMinutes(5);
-		Date date = Date.from(fetchDate.atZone(ZoneId.systemDefault()).toInstant());
 		logger.info("Starting to fill in site devices");
-		List<DeviceData> siteDevices = new ArrayList<>();
-		component.getServers().getSites().forEach(site -> {
-			logger.debug("adding virtual device " + site.getSite());
-			DeviceData siteDevice = new DeviceData(site.getName(), site.getName());
-			siteDevice.setIsVirtual();
-			siteDevices.add(siteDevice);
-			float totalEnergyConsumed =
-					getPushedDeviceValues(component.getServers().getServers(), site, DeviceData::getEnergyConsumed);
-			if (totalEnergyConsumed > -1) {
-				siteDevice.setEnergyConsumed(Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
-			}
-			float totalRealPower =
-					getPushedDeviceValues(component.getServers().getServers(), site, DeviceData::getTotalRealPower);
-			if (totalRealPower > -1) {
-				siteDevice.setTotalRealPower(Math.max(0, siteDevice.getTotalRealPower()) + totalRealPower);
-			}
-		});
-		openSearch.logData(date, siteDevices);
+		component.getServers().getSites().forEach(this::handleSite);
 	}
 
+	public void handleSite(Device site) {
+		logger.debug("checking virtual device " + site.getSite());
+		DeviceData siteData = openSearch.getLastDeviceEntry(site.getName());
+		if (siteData != null) {
+			logger.debug("virtual device already exists " + site.getSite());
+			return;
+		}
+		List<DeviceData> siteDevices = new ArrayList<>();
+		for (Device device : component.getServers().getServers().stream()
+				.filter(device -> device.getSite().equals(site.getName()))
+				.toList()) {
+			DeviceData data = openSearch.getLastDeviceEntry(device.getName());
+			if (data == null) {
+				logger.debug("missing device for virtual device " + site.getSite() + " " + device.getName());
+				return;
+			}
+			siteDevices.add(data);
+		}
+		DeviceData siteDevice = new DeviceData(site.getName(), site.getName());
+		siteDevice.setIsVirtual();
+		float totalEnergyConsumed = getPushedDeviceValues(siteDevices, site, DeviceData::getEnergyConsumed);
+		if (totalEnergyConsumed > -1) {
+			siteDevice.setEnergyConsumed(Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
+		}
+		float totalRealPower = getPushedDeviceValues(siteDevices, site, DeviceData::getTotalRealPower);
+		if (totalRealPower > -1) {
+			siteDevice.setTotalRealPower(Math.max(0, siteDevice.getTotalRealPower()) + totalRealPower);
+		}
+		logger.info("adding virtual device " + site.getSite());
+		openSearch.logData(get15mRoundedDate(), Collections.singletonList(siteDevice));
+	}
+
+	/**
+	 * round to nearest 15m interval
+	 *
+	 * @return
+	 */
+	protected Date get15mRoundedDate() {
+		LocalDateTime now = LocalDateTime.now();
+		return Date.from(now.truncatedTo(ChronoUnit.MINUTES)
+				.withMinute(now.getMinute() / 15 * 15)
+				.atZone(ZoneId.systemDefault())
+				.toInstant());
+	}
 	/**
 	 * Query OpenSearch for the most recent data (within the ${scheduler-time} window) because this
 	 * data is pushed to us from the devices
@@ -71,11 +92,8 @@ public class SiteComponent {
 	 * @param mapper
 	 * @return
 	 */
-	private float getPushedDeviceValues(List<Device> servers, Device site, Function<DeviceData, Float> mapper) {
-		return servers.stream()
-				.filter(device -> device.getSite().equals(site.getName()))
-				.map(server -> openSearch.getLastDeviceEntry(server.getName()))
-				.filter(Objects::nonNull)
+	private float getPushedDeviceValues(List<DeviceData> devices, Device site, Function<DeviceData, Float> mapper) {
+		return devices.stream()
 				.map(mapper)
 				.filter(energy -> energy >= 0)
 				.reduce((val1, val2) -> site.isSubtraction() ? Math.abs(val1 - val2) : val1 + val2)
