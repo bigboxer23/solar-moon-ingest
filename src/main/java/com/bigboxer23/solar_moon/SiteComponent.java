@@ -28,7 +28,6 @@ public class SiteComponent {
 	}
 
 	@Scheduled(fixedDelay = 180000) // 3 min
-	// @Scheduled(cron = "0 5,20,35,50 * * * ?")
 	public void handleSites() {
 		component.loadConfig();
 		if (component.getServers().getSites() == null) {

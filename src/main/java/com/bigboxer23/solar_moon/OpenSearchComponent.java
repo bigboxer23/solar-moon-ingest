@@ -3,7 +3,9 @@ package com.bigboxer23.solar_moon;
 import com.bigboxer23.solar_moon.data.DeviceAttribute;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.data.OpenSearchDTO;
+import jakarta.json.stream.JsonGenerator;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -12,7 +14,9 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.json.JsonData;
+import org.opensearch.client.json.JsonpSerializable;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.json.jsonb.JsonbJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.FieldSort;
 import org.opensearch.client.opensearch._types.SortOptions;
@@ -131,9 +135,9 @@ public class OpenSearchComponent extends ElasticComponent {
 					.index(Collections.singletonList(INDEX_NAME))
 					.query(QueryBuilders.bool()
 							.must(
-									QueryBuilders.matchPhrase()
-											.field(MeterConstants.DEVICE_NAME)
-											.query(deviceName)
+									QueryBuilders.match()
+											.field(MeterConstants.DEVICE_NAME + ".keyword")
+											.query(builder -> builder.stringValue(deviceName))
 											.build()
 											._toQuery(),
 									QueryBuilders.range()
@@ -166,6 +170,15 @@ public class OpenSearchComponent extends ElasticComponent {
 			logger.error("getLastDeviceEntry:", e);
 			return null;
 		}
+	}
+
+	private static String toJson(JsonpSerializable obj) {
+		StringWriter stringWriter = new StringWriter();
+		JsonbJsonpMapper mapper = new JsonbJsonpMapper();
+		JsonGenerator generator = mapper.jsonProvider().createGenerator(stringWriter);
+		mapper.serialize(obj, generator);
+		generator.close();
+		return stringWriter.toString();
 	}
 
 	private OpenSearchClient getClient() {
