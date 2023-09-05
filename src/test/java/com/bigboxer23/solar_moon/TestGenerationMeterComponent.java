@@ -72,17 +72,18 @@ public class TestGenerationMeterComponent implements TestConstants {
 	@Test
 	public void testHandleDeviceBody() throws XPathExpressionException, IOException {
 		component.resetLoadedConfig();
-		assertFalse(component.handleDeviceBody(device2Xml));
+		assertFalse(component.handleDeviceBody(device2Xml, null));
 		component.loadConfig();
-		assertFalse(component.handleDeviceBody(nonUpdateStatus));
-		assertFalse(component.handleDeviceBody(device2XmlNull));
-		assertFalse(component.handleDeviceBody(device2Xml));
+		assertFalse(component.handleDeviceBody(nonUpdateStatus, null));
+		assertFalse(component.handleDeviceBody(device2XmlNull, null));
+		assertFalse(component.handleDeviceBody(device2Xml, null));
 		Device server = new Device();
 		server.setName(device2Name);
 		server.setDeviceName(device2Name);
 		component.getServers().getServers().add(server);
-		assertFalse(component.handleDeviceBody(device2XmlNull));
-		assertTrue(component.handleDeviceBody(device2Xml));
+		assertFalse(component.handleDeviceBody(device2XmlNull, null));
+		assertTrue(component.handleDeviceBody(device2Xml, null));
+		assertTrue(component.handleDeviceBody(device2Xml, "2459786f-74c6-42e0-bc37-a501cb87297a"));
 	}
 
 	@Test

@@ -39,8 +39,11 @@ public class GenerationMeterController implements MeterConstants {
 
 	private GenerationMeterComponent component;
 
-	public GenerationMeterController(GenerationMeterComponent theComponent) {
+	private DeviceComponent deviceComponent;
+
+	public GenerationMeterController(GenerationMeterComponent theComponent, DeviceComponent deviceComponent) {
 		component = theComponent;
+		this.deviceComponent = deviceComponent;
 	}
 
 	@GetMapping(value = "/validateDeviceInformation", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -93,22 +96,13 @@ public class GenerationMeterController implements MeterConstants {
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		logger.info("Received upload request: " + servletRequest.getHeader("X-Forwarded-For"));
-		String authorization = servletRequest.getHeader("Authorization");
-		if (authorization == null || !authorization.startsWith("Basic ")) {
-			logger.warn("Missing authorization token.");
+		String deviceKeyOrUploadId = authenticateRequest(servletRequest);
+		if (authenticateRequest(servletRequest) == null)
+		{
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
-		String usernameAndPassword = authorization.substring(6);
-		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
-		String[] parts = decoded.split(":");
-		// String username = parts[0];//This is the device id
-		if (parts.length != 2 || !uploadToken.equals(parts[1])) {
-			logger.warn("Invalid token, returning unauthorized: " + parts[1]);
-			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
-		}
-
 		try (BufferedReader reader = servletRequest.getReader()) {
-			component.handleDeviceBody(IOUtils.toString(reader));
+			component.handleDeviceBody(IOUtils.toString(reader), isUploadToken(deviceKeyOrUploadId) ? null : deviceKeyOrUploadId);
 		} catch (XPathExpressionException | IOException e) {
 			logger.error("uploadXmlContent: " + servletRequest.getRemoteAddr(), e);
 			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
@@ -117,5 +111,40 @@ public class GenerationMeterController implements MeterConstants {
 		httpHeaders.setContentType(MediaType.TEXT_XML);
 		logger.debug("successfully uploaded data");
 		return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
+	}
+
+	/**
+	 * //TODO: remove uploadToken after migrating devices to device tokens
+	 *
+	 * @param servletRequest
+	 * @return
+	 */
+	private String authenticateRequest(HttpServletRequest servletRequest) {
+		String authorization = servletRequest.getHeader("Authorization");
+		if (authorization == null || !authorization.startsWith("Basic ")) {
+			logger.warn("Missing authorization token.");
+			return null;
+		}
+		String usernameAndPassword = authorization.substring(6);
+		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
+		String[] parts = decoded.split(":");
+		if (parts.length != 2) {
+			logger.warn("Invalid auth, returning unauthorized: " + parts[0]);
+			return null;
+		}
+		if (deviceComponent.findDeviceByDeviceKey(parts[1]) != null)
+		{
+			return parts[1];
+		}
+		if (isUploadToken(parts[1])) {
+			return parts[1];
+		}
+		logger.warn("Invalid token, returning unauthorized: " + parts[1]);
+		return null;
+	}
+
+	private boolean isUploadToken(String token)
+	{
+		return uploadToken.equals(token);
 	}
 }
