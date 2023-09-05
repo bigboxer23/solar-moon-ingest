@@ -170,7 +170,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		return parseDeviceInformation(body, server.getSite(), server.getName());
 	}
 
-	public boolean handleDeviceBody(String body) throws XPathExpressionException {
+	public boolean handleDeviceBody(String body, String deviceKey) throws XPathExpressionException {
 		if (servers == null) {
 			logger.error("servers not defined, not doing anything.");
 			return false;
@@ -180,18 +180,22 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
 			return false;
 		}
-		DeviceData aDeviceData = Optional.ofNullable(findDeviceName(body))
-				.map(this::findDeviceFromDeviceName)
-				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
+		Device device = deviceComponent.findDeviceByDeviceKey(deviceKey);
+		if (device == null) {
+			//TODO:remove this after migrating uploadToken servers
+			device = Optional.ofNullable(findDeviceName(body))
+					.map(this::findDeviceFromDeviceName).orElse(null);
+		}
+		DeviceData deviceData = Optional.ofNullable(device).map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
 				.filter(DeviceData::isValid)
 				.orElse(null);
-		if (aDeviceData == null) {
+		if (deviceData == null) {
 			logger.info("device was not valid, not handling");
 			return false;
 		}
 		openSearch.logData(
-				aDeviceData.getDate() != null ? aDeviceData.getDate() : new Date(),
-				Collections.singletonList(aDeviceData));
+				deviceData.getDate() != null ? deviceData.getDate() : new Date(),
+				Collections.singletonList(deviceData));
 		return true;
 	}
 
