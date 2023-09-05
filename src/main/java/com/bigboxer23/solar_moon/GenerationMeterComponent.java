@@ -182,11 +182,13 @@ public class GenerationMeterComponent implements MeterConstants {
 		}
 		Device device = deviceComponent.findDeviceByDeviceKey(deviceKey);
 		if (device == null) {
-			//TODO:remove this after migrating uploadToken servers
+			// TODO:remove this after migrating uploadToken servers
 			device = Optional.ofNullable(findDeviceName(body))
-					.map(this::findDeviceFromDeviceName).orElse(null);
+					.map(this::findDeviceFromDeviceName)
+					.orElse(null);
 		}
-		DeviceData deviceData = Optional.ofNullable(device).map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
+		DeviceData deviceData = Optional.ofNullable(device)
+				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
 				.filter(DeviceData::isValid)
 				.orElse(null);
 		if (deviceData == null) {

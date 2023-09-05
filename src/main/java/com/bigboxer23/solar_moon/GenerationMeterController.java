@@ -97,12 +97,12 @@ public class GenerationMeterController implements MeterConstants {
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		logger.info("Received upload request: " + servletRequest.getHeader("X-Forwarded-For"));
 		String deviceKeyOrUploadId = authenticateRequest(servletRequest);
-		if (authenticateRequest(servletRequest) == null)
-		{
+		if (authenticateRequest(servletRequest) == null) {
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		try (BufferedReader reader = servletRequest.getReader()) {
-			component.handleDeviceBody(IOUtils.toString(reader), isUploadToken(deviceKeyOrUploadId) ? null : deviceKeyOrUploadId);
+			component.handleDeviceBody(
+					IOUtils.toString(reader), isUploadToken(deviceKeyOrUploadId) ? null : deviceKeyOrUploadId);
 		} catch (XPathExpressionException | IOException e) {
 			logger.error("uploadXmlContent: " + servletRequest.getRemoteAddr(), e);
 			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
@@ -132,8 +132,7 @@ public class GenerationMeterController implements MeterConstants {
 			logger.warn("Invalid auth, returning unauthorized: " + parts[0]);
 			return null;
 		}
-		if (deviceComponent.findDeviceByDeviceKey(parts[1]) != null)
-		{
+		if (deviceComponent.findDeviceByDeviceKey(parts[1]) != null) {
 			return parts[1];
 		}
 		if (isUploadToken(parts[1])) {
@@ -143,8 +142,7 @@ public class GenerationMeterController implements MeterConstants {
 		return null;
 	}
 
-	private boolean isUploadToken(String token)
-	{
+	private boolean isUploadToken(String token) {
 		return uploadToken.equals(token);
 	}
 }

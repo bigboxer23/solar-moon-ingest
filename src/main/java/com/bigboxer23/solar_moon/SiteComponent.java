@@ -47,7 +47,7 @@ public class SiteComponent {
 		}
 		List<DeviceData> siteDevices = new ArrayList<>();
 		for (Device device : component.getServers().getServers().stream()
-				.filter(device -> device.getSite().equals(site.getName()))
+				.filter(device -> device.getSite() != null && device.getSite().equals(site.getName()))
 				.toList()) {
 			DeviceData data = openSearch.getLastDeviceEntry(device.getName());
 			if (data == null) {
