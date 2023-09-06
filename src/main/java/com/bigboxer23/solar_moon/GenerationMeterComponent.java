@@ -175,6 +175,10 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.error("servers not defined, not doing anything.");
 			return false;
 		}
+		if (customerId == null) {
+			logger.error("no customer id, not doing anything.");
+			return false;
+		}
 		logger.debug("parsing device body: " + body);
 		if (!isUpdateEvent(body)) {
 			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
@@ -215,9 +219,6 @@ public class GenerationMeterComponent implements MeterConstants {
 	}
 
 	private Device findDeviceFromDeviceName(String customerId, String deviceName) {
-		if (customerId == null && deviceName != null && !deviceName.isBlank()) {
-			return findDeviceFromDeviceName(deviceName); // TODO:remove
-		}
 		if (customerId == null || customerId.isBlank() || deviceName == null || deviceName.isBlank()) {
 			logger.warn("customer id or device name is null, can't find");
 			return null;
@@ -228,23 +229,6 @@ public class GenerationMeterComponent implements MeterConstants {
 				.findAny()
 				.orElseGet(() -> {
 					logger.warn("could not find device name for " + deviceName);
-					return null;
-				});
-	}
-
-	// TODO:remove after device updates
-	@Deprecated
-	private Device findDeviceFromDeviceName(String deviceName) {
-		if (servers == null || deviceName == null || deviceName.isBlank()) {
-			logger.warn("server or device is null, can't find");
-			return null;
-		}
-		logger.debug("finding device from device name " + deviceName);
-		return servers.getServers().stream()
-				.filter(server -> deviceName.equals(server.getDeviceName()))
-				.findAny()
-				.orElseGet(() -> {
-					logger.warn("could not find server name for " + deviceName);
 					return null;
 				});
 	}

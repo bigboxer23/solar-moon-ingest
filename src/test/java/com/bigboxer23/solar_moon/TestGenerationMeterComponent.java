@@ -77,13 +77,13 @@ public class TestGenerationMeterComponent implements TestConstants {
 		component.loadConfig();
 		assertFalse(component.handleDeviceBody(nonUpdateStatus, null));
 		assertFalse(component.handleDeviceBody(device2XmlNull, null));
-		assertTrue(component.handleDeviceBody(device2Xml, null));
+		assertFalse(component.handleDeviceBody(device2Xml, null));
 		Device server = new Device();
 		server.setName(TestDeviceComponent.deviceName);
 		server.setDeviceName(TestDeviceComponent.deviceName);
 		component.getServers().getServers().add(server);
 		assertFalse(component.handleDeviceBody(device2XmlNull, null));
-		assertTrue(component.handleDeviceBody(device2Xml, null));
+		assertFalse(component.handleDeviceBody(device2Xml, null));
 		assertTrue(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId));
 	}
 

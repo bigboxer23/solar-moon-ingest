@@ -20,7 +20,6 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,10 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Tag(name = "Generation Meter Controller", description = "Various APIs available for interacting with the meters.")
 public class GenerationMeterController implements MeterConstants {
-
-	@Value("${uploadToken}")
-	private String uploadToken;
-
 	private static final Logger logger = LoggerFactory.getLogger(GenerationMeterController.class);
 
 	private GenerationMeterComponent component;
@@ -98,13 +93,12 @@ public class GenerationMeterController implements MeterConstants {
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		logger.info("Received upload request: " + servletRequest.getHeader("X-Forwarded-For"));
-		String customerIdOrUploadId = authenticateRequest(servletRequest);
-		if (authenticateRequest(servletRequest) == null) {
+		String customerId = authenticateRequest(servletRequest);
+		if (customerId == null) {
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		try (BufferedReader reader = servletRequest.getReader()) {
-			component.handleDeviceBody(
-					IOUtils.toString(reader), isUploadToken(customerIdOrUploadId) ? null : customerIdOrUploadId);
+			component.handleDeviceBody(IOUtils.toString(reader), customerId);
 		} catch (XPathExpressionException | IOException e) {
 			logger.error("uploadXmlContent: " + servletRequest.getRemoteAddr(), e);
 			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
@@ -140,14 +134,7 @@ public class GenerationMeterController implements MeterConstants {
 		if (customerId != null) {
 			return customerId;
 		}
-		if (isUploadToken(parts[1])) {
-			return parts[1];
-		}
 		logger.warn("Invalid token, returning unauthorized: " + parts[1]);
 		return null;
-	}
-
-	private boolean isUploadToken(String token) {
-		return uploadToken.equals(token);
 	}
 }
