@@ -1,5 +1,6 @@
 package com.bigboxer23.solar_moon;
 
+import com.bigboxer23.solar_moon.data.Customer;
 import com.bigboxer23.solar_moon.data.Device;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Base64;
+import java.util.Optional;
 import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -39,11 +41,11 @@ public class GenerationMeterController implements MeterConstants {
 
 	private GenerationMeterComponent component;
 
-	private DeviceComponent deviceComponent;
+	private CustomerComponent customerComponent;
 
-	public GenerationMeterController(GenerationMeterComponent theComponent, DeviceComponent deviceComponent) {
+	public GenerationMeterController(GenerationMeterComponent theComponent, CustomerComponent customerComponent) {
 		component = theComponent;
-		this.deviceComponent = deviceComponent;
+		this.customerComponent = customerComponent;
 	}
 
 	@GetMapping(value = "/validateDeviceInformation", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -96,13 +98,13 @@ public class GenerationMeterController implements MeterConstants {
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		logger.info("Received upload request: " + servletRequest.getHeader("X-Forwarded-For"));
-		String deviceKeyOrUploadId = authenticateRequest(servletRequest);
+		String customerIdOrUploadId = authenticateRequest(servletRequest);
 		if (authenticateRequest(servletRequest) == null) {
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		try (BufferedReader reader = servletRequest.getReader()) {
 			component.handleDeviceBody(
-					IOUtils.toString(reader), isUploadToken(deviceKeyOrUploadId) ? null : deviceKeyOrUploadId);
+					IOUtils.toString(reader), isUploadToken(customerIdOrUploadId) ? null : customerIdOrUploadId);
 		} catch (XPathExpressionException | IOException e) {
 			logger.error("uploadXmlContent: " + servletRequest.getRemoteAddr(), e);
 			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
@@ -132,8 +134,11 @@ public class GenerationMeterController implements MeterConstants {
 			logger.warn("Invalid auth, returning unauthorized: " + parts[0]);
 			return null;
 		}
-		if (deviceComponent.findDeviceByDeviceKey(parts[1]) != null) {
-			return parts[1];
+		String customerId = Optional.ofNullable(customerComponent.findCustomerIdByAccessKey(parts[1]))
+				.map(Customer::getCustomerId)
+				.orElse(null);
+		if (customerId != null) {
+			return customerId;
 		}
 		if (isUploadToken(parts[1])) {
 			return parts[1];

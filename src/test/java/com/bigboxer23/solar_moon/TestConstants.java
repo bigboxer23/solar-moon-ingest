@@ -78,7 +78,6 @@ public interface TestConstants {
 			+ "</devices>\n"
 			+ "</DAS>";
 
-	String device2Name = "Test generator 2";
 	String device2Xml = "<DAS>\n"
 			+ "<mode>LOGFILEUPLOAD</mode>\n"
 			+ "<name>xxxxC600xxxx</name>\n"
@@ -86,7 +85,7 @@ public interface TestConstants {
 			+ "<devices>\n"
 			+ "<device>\n"
 			+ "<name>"
-			+ device2Name
+			+ TestDeviceComponent.deviceName
 			+ "</name>\n"
 			+ "<address>100</address>\n"
 			+ "<type>Power Measurement ION xxxx</type>\n"
@@ -193,7 +192,7 @@ public interface TestConstants {
 			+ "<devices>\n"
 			+ "<device>\n"
 			+ "<name>"
-			+ device2Name
+			+ TestDeviceComponent.deviceName
 			+ "</name>\n"
 			+ "<address>100</address>\n"
 			+ "<type>Power Measurement ION 8600</type>\n"
@@ -363,7 +362,7 @@ public interface TestConstants {
 			+ "<devices>\n"
 			+ "<device>\n"
 			+ "<name>"
-			+ device2Name
+			+ TestDeviceComponent.deviceName
 			+ "</name>\n"
 			+ "<address>100</address>\n"
 			+ "<type>Power Measurement ION 8600</type>\n"
@@ -386,7 +385,7 @@ public interface TestConstants {
 			+ "<devices>\n"
 			+ "<device>\n"
 			+ "<name>"
-			+ device2Name
+			+ TestDeviceComponent.deviceName
 			+ "</name>\n"
 			+ "<address>100</address>\n"
 			+ "<type>Power Measurement ION 8600</type>\n"
@@ -410,7 +409,7 @@ public interface TestConstants {
 			+ "<devices>\n"
 			+ "<device>\n"
 			+ "<name>"
-			+ device2Name
+			+ TestDeviceComponent.deviceName
 			+ "</name>\n"
 			+ "<address>100</address>\n"
 			+ "<type>Power Measurement ION 8600</type>\n"
