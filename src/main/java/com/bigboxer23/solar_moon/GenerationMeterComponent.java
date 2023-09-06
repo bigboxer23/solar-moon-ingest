@@ -99,7 +99,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		Servers tempServers = new Servers();
 		tempServers.setServers(new ArrayList<>());
 		tempServers.setSites(new ArrayList<>());
-		deviceComponent.getDeviceTable().scan().items().forEach(device -> (device.isVirtual()
+		deviceComponent.getTable().scan().items().forEach(device -> (device.isVirtual()
 						? tempServers.getSites()
 						: tempServers.getServers())
 				.add(device));
@@ -170,7 +170,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		return parseDeviceInformation(body, server.getSite(), server.getName());
 	}
 
-	public boolean handleDeviceBody(String body, String deviceKey) throws XPathExpressionException {
+	public boolean handleDeviceBody(String body, String customerId) throws XPathExpressionException {
 		if (servers == null) {
 			logger.error("servers not defined, not doing anything.");
 			return false;
@@ -180,13 +180,10 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
 			return false;
 		}
-		Device device = deviceComponent.findDeviceByDeviceKey(deviceKey);
-		if (device == null) {
-			// TODO:remove this after migrating uploadToken servers
-			device = Optional.ofNullable(findDeviceName(body))
-					.map(this::findDeviceFromDeviceName)
-					.orElse(null);
-		}
+		Device device = Optional.ofNullable(findDeviceName(body))
+				.map(deviceName -> findDeviceFromDeviceName(customerId, deviceName))
+				.orElse(null);
+
 		DeviceData deviceData = Optional.ofNullable(device)
 				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
 				.filter(DeviceData::isValid)
@@ -217,12 +214,32 @@ public class GenerationMeterComponent implements MeterConstants {
 		return nodes.getLength() > 0 ? nodes.item(0).getTextContent() : null;
 	}
 
+	private Device findDeviceFromDeviceName(String customerId, String deviceName) {
+		if (customerId == null && deviceName != null && !deviceName.isBlank()) {
+			return findDeviceFromDeviceName(deviceName); // TODO:remove
+		}
+		if (customerId == null || customerId.isBlank() || deviceName == null || deviceName.isBlank()) {
+			logger.warn("customer id or device name is null, can't find");
+			return null;
+		}
+		logger.debug("finding device from device name/customer id " + deviceName + " " + customerId);
+		return deviceComponent.getDevices(customerId).stream()
+				.filter(server -> deviceName.equals(server.getDeviceName()))
+				.findAny()
+				.orElseGet(() -> {
+					logger.warn("could not find device name for " + deviceName);
+					return null;
+				});
+	}
+
+	// TODO:remove after device updates
+	@Deprecated
 	private Device findDeviceFromDeviceName(String deviceName) {
 		if (servers == null || deviceName == null || deviceName.isBlank()) {
 			logger.warn("server or device is null, can't find");
 			return null;
 		}
-		logger.debug("finding server from device name " + deviceName);
+		logger.debug("finding device from device name " + deviceName);
 		return servers.getServers().stream()
 				.filter(server -> deviceName.equals(server.getDeviceName()))
 				.findAny()
