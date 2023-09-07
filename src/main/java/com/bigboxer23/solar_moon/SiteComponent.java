@@ -20,22 +20,17 @@ public class SiteComponent {
 
 	private OpenSearchComponent openSearch;
 
-	private GenerationMeterComponent component;
+	private DeviceComponent component;
 
-	public SiteComponent(OpenSearchComponent component, GenerationMeterComponent generationComponent) {
+	public SiteComponent(OpenSearchComponent component, DeviceComponent deviceComponent) {
 		openSearch = component;
-		this.component = generationComponent;
+		this.component = deviceComponent;
 	}
 
 	@Scheduled(fixedDelay = 180000) // 3 min
 	public void handleSites() {
-		component.loadConfig();
-		if (component.getServers().getSites() == null) {
-			logger.warn("handleSites:servers not configured, not doing anything");
-			return;
-		}
 		logger.info("Starting to fill in site devices");
-		component.getServers().getSites().forEach(this::handleSite);
+		component.getDevices(true).forEach(this::handleSite);
 	}
 
 	public void handleSite(Device site) {
@@ -46,7 +41,7 @@ public class SiteComponent {
 			return;
 		}
 		List<DeviceData> siteDevices = new ArrayList<>();
-		for (Device device : component.getServers().getServers().stream()
+		for (Device device : component.getDevices(false).stream()
 				.filter(device -> device.getSite() != null && device.getSite().equals(site.getName()))
 				.toList()) {
 			DeviceData data = openSearch.getLastDeviceEntry(device.getName());

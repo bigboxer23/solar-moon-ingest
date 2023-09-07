@@ -2,7 +2,6 @@ package com.bigboxer23.solar_moon;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import java.text.SimpleDateFormat;
 import javax.xml.xpath.XPathExpressionException;
@@ -17,14 +16,6 @@ import org.springframework.test.context.TestPropertySource;
 public class TestGenerationMeterComponent implements TestConstants {
 	@Autowired
 	private GenerationMeterComponent component;
-
-	@Test
-	public void testLoadConfig() {
-		assertFalse(component.loadConfig());
-		component.resetLoadedConfig();
-		assertTrue(component.loadConfig());
-		assertFalse(component.loadConfig());
-	}
 
 	@Test
 	public void testFindDeviceName() throws XPathExpressionException {
@@ -72,18 +63,17 @@ public class TestGenerationMeterComponent implements TestConstants {
 
 	@Test
 	public void testHandleDeviceBody() throws XPathExpressionException {
-		component.resetLoadedConfig();
+		assertFalse(component.handleDeviceBody(null, null));
 		assertFalse(component.handleDeviceBody(device2Xml, null));
-		component.loadConfig();
-		assertFalse(component.handleDeviceBody(nonUpdateStatus, null));
-		assertFalse(component.handleDeviceBody(device2XmlNull, null));
-		assertFalse(component.handleDeviceBody(device2Xml, null));
-		Device server = new Device();
-		server.setName(TestDeviceComponent.deviceName);
-		server.setDeviceName(TestDeviceComponent.deviceName);
-		component.getServers().getServers().add(server);
-		assertFalse(component.handleDeviceBody(device2XmlNull, null));
-		assertFalse(component.handleDeviceBody(device2Xml, null));
+		assertFalse(component.handleDeviceBody("", null));
+		assertFalse(component.handleDeviceBody(null, TestDeviceComponent.clientId));
+		assertFalse(component.handleDeviceBody("", null));
+		assertFalse(component.handleDeviceBody(device2Xml, ""));
+		assertFalse(component.handleDeviceBody(null, TestDeviceComponent.clientId));
+		assertFalse(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId + "invalid"));
+		assertFalse(component.handleDeviceBody(nonUpdateStatus, TestDeviceComponent.clientId));
+		assertFalse(component.handleDeviceBody(device2XmlNull, TestDeviceComponent.clientId));
+
 		assertTrue(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId));
 	}
 

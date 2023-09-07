@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -65,26 +64,13 @@ public class GenerationMeterController implements MeterConstants {
 		@Parameter(name = "user", description = "username to access the device", required = true, example = "admin"),
 		@Parameter(name = "pw", description = "password to access the device", required = true, example = "MyPassword")
 	})
-	public boolean validateDeviceInformation(
-			String type, String url, String user, String pw, HttpServletResponse servletResponse) {
-		try {
-			Device server = new Device();
-			server.setUser(user);
-			server.setPassword(pw);
-			server.setAddress(url);
-			server.setType(type);
-			return component.getDeviceInformation(server) != null;
-		} catch (XPathExpressionException | IOException e) {
-			logger.error("validateDeviceInformation:cannot get information for server: " + url, e);
-		}
-		return false;
-	}
-
-	@Operation(summary = "Trigger sending xml config content to configuration server.")
-	@GetMapping(value = "sendXMLToConfigurationServer")
-	public ResponseEntity<Boolean> sendXMLToConfigurationServer() {
-		component.sendXMLToConfigurationServer();
-		return new ResponseEntity<>(true, HttpStatus.OK);
+	public ResponseEntity<Boolean> validateDeviceInformation(String type, String url, String user, String pw) {
+		Device server = new Device();
+		server.setUser(user);
+		server.setPassword(pw);
+		server.setAddress(url);
+		server.setType(type);
+		return new ResponseEntity<>(component.getDeviceInformation(server) != null, HttpStatus.OK);
 	}
 
 	@Operation(
