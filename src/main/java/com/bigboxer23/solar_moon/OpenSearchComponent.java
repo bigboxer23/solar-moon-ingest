@@ -31,14 +31,17 @@ import org.opensearch.client.opensearch.core.bulk.IndexOperation;
 import org.opensearch.client.opensearch.core.search.SourceConfig;
 import org.opensearch.client.opensearch.core.search.SourceFilter;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /** */
 @Component
-public class OpenSearchComponent extends ElasticComponent {
+public class OpenSearchComponent {
 
+	private static final Logger logger = LoggerFactory.getLogger(OpenSearchComponent.class);
 	private static final String TIMESTAMP = "@timestamp";
 
 	private OpenSearchClient client;
@@ -51,6 +54,8 @@ public class OpenSearchComponent extends ElasticComponent {
 
 	@Value("${opensearch.pw}")
 	private String pass;
+
+	protected static final String INDEX_NAME = "generation-meter";
 
 	private boolean isTest = false;
 
