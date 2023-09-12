@@ -9,11 +9,11 @@
     <!-- lookup parent from repository -->
   </parent>
   <groupId>com.bigboxer23</groupId>
-  <artifactId>generation-meter-to-elastic</artifactId>
+  <artifactId>solar-moon-ingest</artifactId>
   <version>1.0</version>
   <packaging>jar</packaging>
-  <name>generation-meter-to-elastic</name>
-  <url>https://github.com/bigboxer23/Generation-Meter-To-Elastic</url>
+  <name>solar-moon-ingest</name>
+  <url>https://github.com/bigboxer23/solar-moon-ingest</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
@@ -200,7 +200,7 @@
             <phase>package</phase>
             <configuration>
               <executable>scp</executable>
-              <commandlineArgs>-i ${identity_file} ${project.basedir}/target/generation-meter-to-elastic-1.0.jar ${user}@${host}:~/</commandlineArgs>
+              <commandlineArgs>-i ${identity_file} ${project.basedir}/target/solar-moon-ingest-1.0.jar ${user}@${host}:~/</commandlineArgs>
             </configuration>
           </execution>
           <execution>

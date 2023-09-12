@@ -18,7 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 						contact =
 								@Contact(
 										name = "bigboxer23@gmail.com",
-										url = "https://github.com/bigboxer23/Generation-Meter-To-Elastic")))
+										url = "https://github.com/bigboxer23/solar-moon-ingest")))
 public class GenerationMeterControllerApp {
 	public static void main(String[] args) {
 		SpringApplication.run(GenerationMeterControllerApp.class, args);
