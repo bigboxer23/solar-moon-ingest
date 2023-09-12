@@ -1,7 +1,8 @@
 package com.bigboxer23.solar_moon;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
+import com.bigboxer23.solar_moon.data.DeviceData;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,7 +18,15 @@ public class TestOpenSearchComponent {
 	@Test
 	public void testGetTotalEnergyConsumed() {
 		// test invalid case
-		Float consumed = component.getTotalEnergyConsumed("testDevice");
+		Float consumed = component.getTotalEnergyConsumed(TestDeviceComponent.deviceName);
 		assertNull(consumed);
+	}
+
+	@Test
+	public void testGetLastDeviceEntry() {
+		DeviceData data = component.getLastDeviceEntry(TestDeviceComponent.deviceName);
+		assertTrue(data.isValid());
+		assertNotNull(data.getCustomerId());
+		assertEquals(TestDeviceComponent.clientId, data.getCustomerId());
 	}
 }

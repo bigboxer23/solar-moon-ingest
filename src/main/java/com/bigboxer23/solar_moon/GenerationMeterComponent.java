@@ -96,7 +96,7 @@ public class GenerationMeterComponent implements MeterConstants {
 			logger.warn("getDeviceInformation", e);
 			return null;
 		}
-		return parseDeviceInformation(body, device.getSite(), device.getName());
+		return parseDeviceInformation(body, device.getSite(), device.getName(), device.getClientId());
 	}
 
 	public boolean handleDeviceBody(String body, String customerId) throws XPathExpressionException {
@@ -114,7 +114,7 @@ public class GenerationMeterComponent implements MeterConstants {
 				.orElse(null);
 
 		DeviceData deviceData = Optional.ofNullable(device)
-				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName()))
+				.map(server -> parseDeviceInformation(body, server.getSite(), server.getName(), customerId))
 				.filter(DeviceData::isValid)
 				.orElse(null);
 		if (deviceData == null) {
@@ -158,13 +158,13 @@ public class GenerationMeterComponent implements MeterConstants {
 				});
 	}
 
-	protected DeviceData parseDeviceInformation(String body, String site, String name) {
+	protected DeviceData parseDeviceInformation(String body, String site, String name, String customerId) {
 		try {
 			logger.debug("parsing device info " + site + ":" + name + "\n" + body);
 			InputSource xml = new InputSource(new StringReader(body));
 			NodeList nodes = (NodeList)
 					XPathFactory.newInstance().newXPath().compile(POINT_PATH).evaluate(xml, XPathConstants.NODESET);
-			DeviceData aDeviceData = new DeviceData(site, name);
+			DeviceData aDeviceData = new DeviceData(site, name, customerId);
 			for (int i = 0; i < nodes.getLength(); i++) {
 				String attributeName =
 						nodes.item(i).getAttributes().getNamedItem("name").getNodeValue();
