@@ -51,7 +51,7 @@ public class SiteComponent {
 			}
 			siteDevices.add(data);
 		}
-		DeviceData siteDevice = new DeviceData(site.getName(), site.getName());
+		DeviceData siteDevice = new DeviceData(site.getName(), site.getName(), site.getClientId());
 		siteDevice.setIsVirtual();
 		float totalEnergyConsumed = getPushedDeviceValues(siteDevices, site, DeviceData::getEnergyConsumed);
 		if (totalEnergyConsumed > -1) {
