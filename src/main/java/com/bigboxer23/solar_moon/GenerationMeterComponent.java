@@ -76,6 +76,7 @@ public class GenerationMeterComponent implements MeterConstants {
 		List<DeviceData> deviceData = deviceComponent.getDevices(false).stream()
 				.filter(device -> !device.isPushedDevice())
 				.map(this::getDeviceInformation)
+				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 		openSearch.logData(date, deviceData);
 		alarmComponent.fireAlarms(deviceData);
@@ -91,6 +92,13 @@ public class GenerationMeterComponent implements MeterConstants {
 		try (Response response = OkHttpUtil.getSynchronous(
 				device.getAddress(), getAuthCallback(device.getUser(), device.getPassword()))) {
 			body = response.body().string();
+			if (!response.isSuccessful()) {
+				logger.warn("getDeviceInformation unable to fetch data: Response code: "
+						+ response.code()
+						+ "\nbody: "
+						+ body);
+				return null;
+			}
 			logger.debug("fetched data: " + body);
 		} catch (IOException e) {
 			logger.warn("getDeviceInformation", e);
