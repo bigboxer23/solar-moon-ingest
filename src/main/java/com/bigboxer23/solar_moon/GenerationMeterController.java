@@ -93,7 +93,7 @@ public class GenerationMeterController implements MeterConstants {
 		}
 		HttpHeaders httpHeaders = new HttpHeaders();
 		httpHeaders.setContentType(MediaType.TEXT_XML);
-		logger.debug("successfully uploaded data " + TransactionUtil.getLoggingStatement());
+		logger.info("successfully uploaded data " + TransactionUtil.getLoggingStatement());
 		return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 	}
 
