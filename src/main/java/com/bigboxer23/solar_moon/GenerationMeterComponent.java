@@ -116,15 +116,15 @@ public class GenerationMeterComponent implements MeterConstants {
 		return parseDeviceInformation(body, device.getSite(), device.getName(), device.getClientId());
 	}
 
-	public boolean handleDeviceBody(String body, String customerId) throws XPathExpressionException {
+	public DeviceData handleDeviceBody(String body, String customerId) throws XPathExpressionException {
 		if (customerId == null || body == null || customerId.isBlank() || body.isBlank()) {
 			logger.error("no customer id, not doing anything. " + TransactionUtil.getLoggingStatement());
-			return false;
+			return null;
 		}
 		logger.debug("parsing device body: " + body);
 		if (!isUpdateEvent(body)) {
 			logger.debug("event is not a LOGFILEUPLOAD, doing nothing: " + TransactionUtil.getLoggingStatement());
-			return false;
+			return null;
 		}
 		Device device = Optional.ofNullable(findDeviceName(body))
 				.map(deviceName -> findDeviceFromDeviceName(customerId, deviceName))
@@ -136,13 +136,13 @@ public class GenerationMeterComponent implements MeterConstants {
 				.orElse(null);
 		if (deviceData == null) {
 			logger.info("device was not valid, not handling: " + TransactionUtil.getLoggingStatement());
-			return false;
+			return null;
 		}
 		openSearch.logData(
 				deviceData.getDate() != null ? deviceData.getDate() : new Date(),
 				Collections.singletonList(deviceData));
 		// siteComponent.handleSite(device.getSite());
-		return true;
+		return deviceData;
 	}
 
 	public boolean isUpdateEvent(String body) throws XPathExpressionException {

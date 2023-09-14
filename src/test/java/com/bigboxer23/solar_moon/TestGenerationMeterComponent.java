@@ -68,18 +68,18 @@ public class TestGenerationMeterComponent implements TestConstants {
 
 	@Test
 	public void testHandleDeviceBody() throws XPathExpressionException {
-		assertFalse(component.handleDeviceBody(null, null));
-		assertFalse(component.handleDeviceBody(device2Xml, null));
-		assertFalse(component.handleDeviceBody("", null));
-		assertFalse(component.handleDeviceBody(null, TestDeviceComponent.clientId));
-		assertFalse(component.handleDeviceBody("", null));
-		assertFalse(component.handleDeviceBody(device2Xml, ""));
-		assertFalse(component.handleDeviceBody(null, TestDeviceComponent.clientId));
-		assertFalse(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId + "invalid"));
-		assertFalse(component.handleDeviceBody(nonUpdateStatus, TestDeviceComponent.clientId));
-		assertFalse(component.handleDeviceBody(device2XmlNull, TestDeviceComponent.clientId));
+		assertNull(component.handleDeviceBody(null, null));
+		assertNull(component.handleDeviceBody(device2Xml, null));
+		assertNull(component.handleDeviceBody("", null));
+		assertNull(component.handleDeviceBody(null, TestDeviceComponent.clientId));
+		assertNull(component.handleDeviceBody("", null));
+		assertNull(component.handleDeviceBody(device2Xml, ""));
+		assertNull(component.handleDeviceBody(null, TestDeviceComponent.clientId));
+		assertNull(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId + "invalid"));
+		assertNull(component.handleDeviceBody(nonUpdateStatus, TestDeviceComponent.clientId));
+		assertNull(component.handleDeviceBody(device2XmlNull, TestDeviceComponent.clientId));
 
-		assertTrue(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId));
+		assertNotNull(component.handleDeviceBody(device2Xml, TestDeviceComponent.clientId));
 	}
 
 	@Test

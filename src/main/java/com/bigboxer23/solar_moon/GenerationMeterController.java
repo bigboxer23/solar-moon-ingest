@@ -2,6 +2,7 @@ package com.bigboxer23.solar_moon;
 
 import com.bigboxer23.solar_moon.data.Customer;
 import com.bigboxer23.solar_moon.data.Device;
+import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.web.Transaction;
 import com.bigboxer23.solar_moon.web.TransactionUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -86,15 +87,18 @@ public class GenerationMeterController implements MeterConstants {
 			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
 		}
 		try (BufferedReader reader = servletRequest.getReader()) {
-			component.handleDeviceBody(IOUtils.toString(reader), customerId);
+			DeviceData data = component.handleDeviceBody(IOUtils.toString(reader), customerId);
+			if (data == null) {
+				return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
+			}
+			HttpHeaders httpHeaders = new HttpHeaders();
+			httpHeaders.setContentType(MediaType.TEXT_XML);
+			logger.info("successfully uploaded data: " + data.getName() + ":" + TransactionUtil.getLoggingStatement());
+			return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 		} catch (XPathExpressionException | IOException e) {
 			logger.error("uploadXmlContent: " + TransactionUtil.getLoggingStatement(), e);
 			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
 		}
-		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.setContentType(MediaType.TEXT_XML);
-		logger.info("successfully uploaded data " + TransactionUtil.getLoggingStatement());
-		return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 	}
 
 	/**
