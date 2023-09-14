@@ -27,7 +27,7 @@ public class SiteComponent {
 		this.component = deviceComponent;
 	}
 
-	@Scheduled(fixedDelay = 180000) // 3 min
+	@Scheduled(fixedDelay = 60000) // 3 min
 	public void handleSites() {
 		logger.info("Starting to fill in site devices");
 		component.getDevices(true).forEach(this::handleSite);
