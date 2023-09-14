@@ -3,6 +3,7 @@ package com.bigboxer23.solar_moon;
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceAttribute;
 import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.web.TransactionUtil;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import java.io.IOException;
@@ -60,11 +61,17 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	private final DeviceComponent deviceComponent;
 
+	private final SiteComponent siteComponent;
+
 	public GenerationMeterComponent(
-			OpenSearchComponent openSearch, AlarmComponent alarmComponent, DeviceComponent deviceComponent) {
+			OpenSearchComponent openSearch,
+			AlarmComponent alarmComponent,
+			DeviceComponent deviceComponent,
+			SiteComponent siteComponent) {
 		this.openSearch = openSearch;
 		this.alarmComponent = alarmComponent;
 		this.deviceComponent = deviceComponent;
+		this.siteComponent = siteComponent;
 	}
 
 	// @Scheduled(fixedDelay = 5000)
@@ -78,8 +85,10 @@ public class GenerationMeterComponent implements MeterConstants {
 				.map(this::getDeviceInformation)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
-		openSearch.logData(date, deviceData);
-		alarmComponent.fireAlarms(deviceData);
+		if (!deviceData.isEmpty()) {
+			openSearch.logData(date, deviceData);
+			alarmComponent.fireAlarms(deviceData);
+		}
 		logger.info("end of fetch data");
 	}
 
@@ -109,12 +118,12 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	public boolean handleDeviceBody(String body, String customerId) throws XPathExpressionException {
 		if (customerId == null || body == null || customerId.isBlank() || body.isBlank()) {
-			logger.error("no customer id, not doing anything.");
+			logger.error("no customer id, not doing anything. " + TransactionUtil.getLoggingStatement());
 			return false;
 		}
 		logger.debug("parsing device body: " + body);
 		if (!isUpdateEvent(body)) {
-			logger.info("event is not a LOGFILEUPLOAD, doing nothing");
+			logger.debug("event is not a LOGFILEUPLOAD, doing nothing: " + TransactionUtil.getLoggingStatement());
 			return false;
 		}
 		Device device = Optional.ofNullable(findDeviceName(body))
@@ -126,12 +135,13 @@ public class GenerationMeterComponent implements MeterConstants {
 				.filter(DeviceData::isValid)
 				.orElse(null);
 		if (deviceData == null) {
-			logger.info("device was not valid, not handling");
+			logger.info("device was not valid, not handling: " + TransactionUtil.getLoggingStatement());
 			return false;
 		}
 		openSearch.logData(
 				deviceData.getDate() != null ? deviceData.getDate() : new Date(),
 				Collections.singletonList(deviceData));
+		// siteComponent.handleSite(device.getSite());
 		return true;
 	}
 
