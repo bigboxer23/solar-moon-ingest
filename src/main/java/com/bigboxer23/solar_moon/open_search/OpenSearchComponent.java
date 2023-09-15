@@ -1,11 +1,10 @@
-package com.bigboxer23.solar_moon;
+package com.bigboxer23.solar_moon.open_search;
 
+import com.bigboxer23.solar_moon.MeterConstants;
 import com.bigboxer23.solar_moon.data.DeviceAttribute;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.data.OpenSearchDTO;
-import jakarta.json.stream.JsonGenerator;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.*;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -13,19 +12,13 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.opensearch.client.RestClient;
-import org.opensearch.client.json.JsonData;
-import org.opensearch.client.json.JsonpSerializable;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
-import org.opensearch.client.json.jsonb.JsonbJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.FieldSort;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.SortOrder;
 import org.opensearch.client.opensearch._types.query_dsl.QueryBuilders;
-import org.opensearch.client.opensearch.core.BulkRequest;
-import org.opensearch.client.opensearch.core.BulkResponse;
-import org.opensearch.client.opensearch.core.SearchRequest;
-import org.opensearch.client.opensearch.core.SearchResponse;
+import org.opensearch.client.opensearch.core.*;
 import org.opensearch.client.opensearch.core.bulk.BulkOperation;
 import org.opensearch.client.opensearch.core.bulk.IndexOperation;
 import org.opensearch.client.opensearch.core.search.SourceConfig;
@@ -39,10 +32,9 @@ import org.springframework.stereotype.Component;
 
 /** */
 @Component
-public class OpenSearchComponent {
+public class OpenSearchComponent implements OpenSearchConstants {
 
 	private static final Logger logger = LoggerFactory.getLogger(OpenSearchComponent.class);
-	private static final String TIMESTAMP = "@timestamp";
 
 	private OpenSearchClient client;
 
@@ -54,8 +46,6 @@ public class OpenSearchComponent {
 
 	@Value("${opensearch.pw}")
 	private String pass;
-
-	protected static final String INDEX_NAME = "generation-meter";
 
 	private boolean isTest = false;
 
@@ -92,13 +82,8 @@ public class OpenSearchComponent {
 
 	public Float getTotalEnergyConsumed(String deviceName) {
 		try {
-			SearchRequest request = new SearchRequest.Builder()
-					.index(Collections.singletonList(INDEX_NAME))
-					.query(QueryBuilders.matchPhrase()
-							.field(MeterConstants.DEVICE_NAME)
-							.query(deviceName)
-							.build()
-							._toQuery())
+			SearchRequest request = OpenSearchQueries.getSearchRequestBuilder()
+					.query(OpenSearchQueries.getDeviceNameQuery(deviceName))
 					.sort(new SortOptions.Builder()
 							.field(new FieldSort.Builder()
 									.field(TIMESTAMP)
@@ -134,22 +119,14 @@ public class OpenSearchComponent {
 		}
 	}
 
-	public DeviceData getLastDeviceEntry(String deviceName) {
+	public DeviceData getLastDeviceEntry(String customerId, String deviceName) {
 		try {
-			SearchRequest request = new SearchRequest.Builder()
-					.index(Collections.singletonList(INDEX_NAME))
+			SearchRequest request = OpenSearchQueries.getSearchRequestBuilder()
 					.query(QueryBuilders.bool()
 							.must(
-									QueryBuilders.match()
-											.field(MeterConstants.DEVICE_NAME + ".keyword")
-											.query(builder -> builder.stringValue(deviceName))
-											.build()
-											._toQuery(),
-									QueryBuilders.range()
-											.field(TIMESTAMP)
-											.gte(JsonData.of("now-15m"))
-											.build()
-											._toQuery())
+									OpenSearchQueries.getDeviceNameQuery(deviceName),
+									OpenSearchQueries.getCustomerIdQuery(customerId),
+									OpenSearchQueries.getLast15MinQuery())
 							.build()
 							._toQuery())
 					.sort(new SortOptions.Builder()
@@ -165,25 +142,93 @@ public class OpenSearchComponent {
 				logger.debug("couldn't find previous value for " + deviceName);
 				return null;
 			}
-			Map<String, Object> fields = response.hits().hits().get(0).source();
-			if (fields == null) {
-				logger.warn("No fields associated with result for " + deviceName);
-				return null;
-			}
-			return new DeviceData(fields);
+			return OpenSearchUtils.getDeviceDataFromFields(
+					deviceName, response.hits().hits().get(0).source());
 		} catch (IOException e) {
 			logger.error("getLastDeviceEntry:", e);
 			return null;
 		}
 	}
 
-	private static String toJson(JsonpSerializable obj) {
-		StringWriter stringWriter = new StringWriter();
-		JsonbJsonpMapper mapper = new JsonbJsonpMapper();
-		JsonGenerator generator = mapper.jsonProvider().createGenerator(stringWriter);
-		mapper.serialize(obj, generator);
-		generator.close();
-		return stringWriter.toString();
+	public void deleteByCustomerId(String customerId) {
+		try {
+			getClient()
+					.deleteByQuery(OpenSearchQueries.getDeleteRequestBuilder()
+							.query(OpenSearchQueries.getCustomerIdQuery(customerId))
+							.build());
+		} catch (IOException e) {
+			logger.error("deleteByCustomerId: " + customerId, e);
+		}
+	}
+
+	public void deleteById(String id) {
+		try {
+			getClient()
+					.delete(new DeleteRequest.Builder().index(INDEX_NAME).id(id).build());
+		} catch (IOException e) {
+			logger.error("deleteById: " + id, e);
+		}
+	}
+
+	public DeviceData getDeviceByTimePeriod(String customerId, String deviceName, Date date) {
+		try {
+			SearchRequest request = OpenSearchQueries.getSearchRequestBuilder()
+					.query(QueryBuilders.bool()
+							.must(
+									OpenSearchQueries.getCustomerIdQuery(customerId),
+									OpenSearchQueries.getDeviceNameQuery(deviceName),
+									OpenSearchQueries.getDateRangeQuery(date))
+							.build()
+							._toQuery())
+					.build();
+			SearchResponse<Map> response = getClient().search(request, Map.class);
+			if (response.hits().hits().isEmpty()) {
+				logger.debug("Couldn't find previous value for " + deviceName);
+				return null;
+			}
+			return OpenSearchUtils.getDeviceDataFromFields(
+					deviceName, response.hits().hits().get(0).source());
+		} catch (IOException e) {
+			logger.error("getDeviceByTimePeriod " + customerId + ":" + deviceName, e);
+			return null;
+		}
+	}
+
+	public List<DeviceData> getDevicesForSiteByTimePeriod(String customerId, String site, Date date) {
+		try {
+			SearchRequest request = OpenSearchQueries.getSearchRequestBuilder()
+					.query(QueryBuilders.bool()
+							.must(
+									OpenSearchQueries.getCustomerIdQuery(customerId),
+									OpenSearchQueries.getSiteQuery(site),
+									OpenSearchQueries.getDateRangeQuery(date))
+							.build()
+							._toQuery())
+					.build();
+			return OpenSearchUtils.getDeviceDataFromResults(
+					getClient().search(request, Map.class).hits().hits());
+		} catch (IOException e) {
+			logger.error("getDeviceCountByTimePeriod " + customerId + ":" + site, e);
+			return Collections.emptyList();
+		}
+	}
+
+	public int getSiteDevicesCountByTimePeriod(String customerId, String site, Date date) {
+		try {
+			SearchRequest request = OpenSearchQueries.getSearchRequestBuilder()
+					.query(QueryBuilders.bool()
+							.must(
+									OpenSearchQueries.getCustomerIdQuery(customerId),
+									OpenSearchQueries.getSiteQuery(site),
+									OpenSearchQueries.getDateRangeQuery(date))
+							.build()
+							._toQuery())
+					.build();
+			return getClient().search(request, Map.class).hits().hits().size();
+		} catch (IOException e) {
+			logger.error("getDeviceCountByTimePeriod " + customerId + ":" + site, e);
+			return -1;
+		}
 	}
 
 	private OpenSearchClient getClient() {

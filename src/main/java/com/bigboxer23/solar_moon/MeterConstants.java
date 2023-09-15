@@ -9,6 +9,8 @@ public interface MeterConstants {
 
 	String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss z";
 
+	String DATE_PATTERN_UTC = "yyyy-MM-dd HH:mm:ss";
+
 	String ZONE = "zone";
 
 	String POINT_PATH = "/DAS/devices/device/records/record/point";
