@@ -2,14 +2,12 @@ package com.bigboxer23.solar_moon;
 
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import com.bigboxer23.solar_moon.open_search.OpenSearchComponent;
+import com.bigboxer23.solar_moon.open_search.OpenSearchUtils;
 import java.util.*;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /** Component to stash all the logic related to aggregating virtual site devices */
@@ -27,32 +25,23 @@ public class SiteComponent {
 		this.component = deviceComponent;
 	}
 
-	@Scheduled(fixedDelay = 60000) // 3 min
-	public void handleSites() {
-		logger.info("Starting to fill in site devices");
-		component.getDevices(true).forEach(this::handleSite);
-	}
-
-	public void handleSite(Device site) {
-		logger.debug("checking virtual device " + site.getName());
-		DeviceData siteData = openSearch.getLastDeviceEntry(site.getName());
-		if (siteData != null) {
-			logger.debug("virtual device already exists " + site.getName());
+	public void handleSite(DeviceData device) {
+		if (!shouldAddSiteDevice(device)) {
 			return;
 		}
-		List<DeviceData> siteDevices = new ArrayList<>();
-		for (Device device : component.getDevices(false).stream()
-				.filter(device -> device.getSite() != null && device.getSite().equals(site.getName()))
-				.toList()) {
-			DeviceData data = openSearch.getLastDeviceEntry(device.getName());
-			if (data == null) {
-				logger.debug("missing device for virtual device " + site.getName() + " " + device.getName());
-				return;
-			}
-			siteDevices.add(data);
+		Device site = component.getDevicesBySite(device.getCustomerId(), device.getSite()).stream()
+				.filter(Device::isVirtual)
+				.findAny()
+				.orElse(null);
+		if (site == null) {
+			logger.warn("cannot find site " + device.getCustomerId() + ":" + device.getSite());
+			return;
 		}
-		DeviceData siteDevice = new DeviceData(site.getName(), site.getName(), site.getClientId());
+		List<DeviceData> siteDevices =
+				openSearch.getDevicesForSiteByTimePeriod(device.getCustomerId(), device.getSite(), device.getDate());
+		DeviceData siteDevice = new DeviceData(device.getSite(), device.getSite(), device.getCustomerId());
 		siteDevice.setIsVirtual();
+
 		float totalEnergyConsumed = getPushedDeviceValues(siteDevices, site, DeviceData::getEnergyConsumed);
 		if (totalEnergyConsumed > -1) {
 			siteDevice.setEnergyConsumed(Math.max(0, siteDevice.getTotalEnergyConsumed()) + totalEnergyConsumed);
@@ -61,22 +50,33 @@ public class SiteComponent {
 		if (totalRealPower > -1) {
 			siteDevice.setTotalRealPower(Math.max(0, siteDevice.getTotalRealPower()) + totalRealPower);
 		}
-		logger.info("adding virtual device " + site.getName());
-		openSearch.logData(get15mRoundedDate(), Collections.singletonList(siteDevice));
+		logger.info("adding virtual device " + device.getSite() + " : " + device.getDate());
+		openSearch.logData(device.getDate(), Collections.singletonList(siteDevice));
 	}
 
-	/**
-	 * round to nearest 15m interval
-	 *
-	 * @return
-	 */
-	protected Date get15mRoundedDate() {
-		LocalDateTime now = LocalDateTime.now();
-		return Date.from(now.truncatedTo(ChronoUnit.MINUTES)
-				.withMinute(now.getMinute() / 15 * 15)
-				.atZone(ZoneId.systemDefault())
-				.toInstant());
+	private boolean shouldAddSiteDevice(DeviceData device) {
+		try {
+			OpenSearchUtils.waitForIndexing();
+		} catch (InterruptedException theE) {
+		}
+		int deviceCount = component
+				.getDevicesBySite(device.getCustomerId(), device.getSite())
+				.size();
+		int openSearchDeviceCount =
+				openSearch.getSiteDevicesCountByTimePeriod(device.getCustomerId(), device.getSite(), device.getDate());
+		if (deviceCount - 1 != openSearchDeviceCount) {
+			logger.debug("not calculating site "
+					+ device.getSite()
+					+ ". Only "
+					+ openSearchDeviceCount
+					+ " devices have written data out of "
+					+ deviceCount
+					+ ".");
+			return false;
+		}
+		return true;
 	}
+
 	/**
 	 * Query OpenSearch for the most recent data (within the ${scheduler-time} window) because this
 	 * data is pushed to us from the devices

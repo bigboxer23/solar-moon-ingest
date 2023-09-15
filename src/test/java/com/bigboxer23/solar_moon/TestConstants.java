@@ -78,6 +78,8 @@ public interface TestConstants {
 			+ "</devices>\n"
 			+ "</DAS>";
 
+	String date = "2020-08-21 17:30:00";
+
 	String device2Xml = "<DAS>\n"
 			+ "<mode>LOGFILEUPLOAD</mode>\n"
 			+ "<name>xxxxC600xxxx</name>\n"
@@ -94,7 +96,9 @@ public interface TestConstants {
 			+ "<numpoints>64</numpoints>\n"
 			+ "<records>\n"
 			+ "<record>\n"
-			+ "<time zone=\"UTC\">2020-08-21 17:30:00</time>\n"
+			+ "<time zone=\"UTC\">"
+			+ date
+			+ "</time>\n"
 			+ "<age units=\"seconds\">503</age>\n"
 			+ "<error text=\"Ok\">0</error>\n"
 			+ "<point number=\"0\" name=\"Vln a\" units=\"Volts\" value=\"2476.4\"/>\n"

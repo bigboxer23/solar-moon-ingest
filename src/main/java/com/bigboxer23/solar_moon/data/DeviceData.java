@@ -2,6 +2,7 @@ package com.bigboxer23.solar_moon.data;
 
 import static com.bigboxer23.solar_moon.MeterConstants.*;
 
+import com.bigboxer23.solar_moon.open_search.OpenSearchConstants;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class DeviceData {
 		setAverageVoltage(doubleToFloat(openSearchMap.get(AVG_VOLT)));
 		setAverageCurrent(doubleToFloat(openSearchMap.get(AVG_CURRENT)));
 		setTotalEnergyConsumed(doubleToFloat(openSearchMap.get(TOTAL_ENG_CONS)));
+		setDate(new Date((Long) openSearchMap.get(OpenSearchConstants.TIMESTAMP)));
 	}
 
 	public boolean isValid() {
