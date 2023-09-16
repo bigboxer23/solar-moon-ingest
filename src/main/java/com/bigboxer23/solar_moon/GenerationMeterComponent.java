@@ -119,12 +119,12 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	public DeviceData handleDeviceBody(String body, String customerId) throws XPathExpressionException {
 		if (customerId == null || body == null || customerId.isBlank() || body.isBlank()) {
-			logger.error("no customer id, not doing anything. " + TransactionUtil.getLoggingStatement());
+			logger.error(TransactionUtil.getLoggingStatement() + "no customer id, not doing anything.");
 			return null;
 		}
 		logger.debug("parsing device body: " + body);
 		if (!isUpdateEvent(body)) {
-			logger.debug("event is not a LOGFILEUPLOAD, doing nothing: " + TransactionUtil.getLoggingStatement());
+			logger.debug(TransactionUtil.getLoggingStatement() + "event is not a LOGFILEUPLOAD, doing nothing.");
 			return null;
 		}
 		Device device = Optional.ofNullable(findDeviceName(body))
@@ -136,7 +136,7 @@ public class GenerationMeterComponent implements MeterConstants {
 				.filter(DeviceData::isValid)
 				.orElse(null);
 		if (deviceData == null) {
-			logger.info("device was not valid, not handling: " + TransactionUtil.getLoggingStatement());
+			logger.info(TransactionUtil.getLoggingStatement() + "device was not valid, not handling.");
 			return null;
 		}
 		openSearch.logData(

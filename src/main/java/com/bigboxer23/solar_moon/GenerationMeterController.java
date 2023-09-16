@@ -93,10 +93,10 @@ public class GenerationMeterController implements MeterConstants {
 			}
 			HttpHeaders httpHeaders = new HttpHeaders();
 			httpHeaders.setContentType(MediaType.TEXT_XML);
-			logger.info("successfully uploaded data: " + data.getName() + ":" + TransactionUtil.getLoggingStatement());
+			logger.info(TransactionUtil.getLoggingStatement() + "successfully uploaded data: " + data.getName());
 			return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 		} catch (XPathExpressionException | IOException e) {
-			logger.error("uploadXmlContent: " + TransactionUtil.getLoggingStatement(), e);
+			logger.error(TransactionUtil.getLoggingStatement() + "uploadXmlContent:", e);
 			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -110,15 +110,14 @@ public class GenerationMeterController implements MeterConstants {
 	private String authenticateRequest(HttpServletRequest servletRequest) {
 		String authorization = servletRequest.getHeader("Authorization");
 		if (authorization == null || !authorization.startsWith("Basic ")) {
-			logger.warn("Missing authorization token. " + TransactionUtil.getLoggingStatement());
+			logger.warn(TransactionUtil.getLoggingStatement() + "Missing authorization token.");
 			return null;
 		}
 		String usernameAndPassword = authorization.substring(6);
 		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
 		String[] parts = decoded.split(":");
 		if (parts.length != 2) {
-			logger.warn(
-					"Invalid auth, returning unauthorized: " + parts[0] + " " + TransactionUtil.getLoggingStatement());
+			logger.warn(TransactionUtil.getLoggingStatement() + "Invalid auth, returning unauthorized: " + parts[0]);
 			return null;
 		}
 		String customerId = Optional.ofNullable(customerComponent.findCustomerIdByAccessKey(parts[1]))
@@ -127,7 +126,7 @@ public class GenerationMeterController implements MeterConstants {
 		if (customerId != null) {
 			return customerId;
 		}
-		logger.warn("Invalid token, returning unauthorized: " + parts[1] + " " + TransactionUtil.getLoggingStatement());
+		logger.warn(TransactionUtil.getLoggingStatement() + "Invalid token, returning unauthorized: " + parts[1]);
 		return null;
 	}
 }
