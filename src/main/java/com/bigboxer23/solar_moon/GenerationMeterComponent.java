@@ -118,8 +118,12 @@ public class GenerationMeterComponent implements MeterConstants {
 	}
 
 	public DeviceData handleDeviceBody(String body, String customerId) throws XPathExpressionException {
-		if (customerId == null || body == null || customerId.isBlank() || body.isBlank()) {
+		if (customerId == null || customerId.isBlank()) {
 			logger.error(TransactionUtil.getLoggingStatement() + "no customer id, not doing anything.");
+			return null;
+		}
+		if (body == null || body.isBlank()) {
+			logger.error(TransactionUtil.getLoggingStatement() + "no body, not doing anything.");
 			return null;
 		}
 		logger.debug("parsing device body: " + body);

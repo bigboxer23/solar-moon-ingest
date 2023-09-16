@@ -84,26 +84,28 @@ public class GenerationMeterController implements MeterConstants {
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
 		String customerId = authenticateRequest(servletRequest);
 		if (customerId == null) {
-			return new ResponseEntity<>("FAILURE", HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.UNAUTHORIZED);
 		}
 		try (BufferedReader reader = servletRequest.getReader()) {
 			DeviceData data = component.handleDeviceBody(IOUtils.toString(reader), customerId);
 			if (data == null) {
-				return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.BAD_REQUEST);
 			}
 			HttpHeaders httpHeaders = new HttpHeaders();
 			httpHeaders.setContentType(MediaType.TEXT_XML);
-			logger.info(TransactionUtil.getLoggingStatement() + "successfully uploaded data: " + data.getName());
+			logger.info(TransactionUtil.getLoggingStatement()
+					+ "successfully uploaded data: "
+					+ data.getName()
+					+ " : "
+					+ data.getDate());
 			return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 		} catch (XPathExpressionException | IOException e) {
 			logger.error(TransactionUtil.getLoggingStatement() + "uploadXmlContent:", e);
-			return new ResponseEntity<>("FAILURE", HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	/**
-	 * //TODO: remove uploadToken after migrating devices to device tokens
-	 *
 	 * @param servletRequest
 	 * @return
 	 */

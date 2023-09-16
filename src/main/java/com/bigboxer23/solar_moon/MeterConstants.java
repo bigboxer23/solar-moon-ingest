@@ -17,6 +17,8 @@ public interface MeterConstants {
 	String DEVICE_NAME_PATH = "/DAS/devices/device/name";
 	String XML_SUCCESS_RESPONSE = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><DAS><result>SUCCESS</result></DAS>";
 
+	String XML_FAILURE_RESPONSE = "FAILURE";
+
 	String TOTAL_ENG_CONS = "Total Energy Consumption";
 	String ENG_CONS = "Energy Consumed";
 	String TOTAL_REAL_POWER = "Total Real Power";
