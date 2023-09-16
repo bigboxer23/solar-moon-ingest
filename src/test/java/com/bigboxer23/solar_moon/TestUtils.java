@@ -16,6 +16,7 @@ public class TestUtils {
 	public static String getDeviceXML(String deviceName, Date date) {
 		return getDeviceXML(TestConstants.device2Xml, deviceName, date);
 	}
+
 	public static String getDeviceXML(String deviceXML, String deviceName, Date date) {
 		if (deviceName != null && !deviceName.isBlank()) {
 			deviceXML = deviceXML.replace(TestDeviceComponent.deviceName, deviceName);
