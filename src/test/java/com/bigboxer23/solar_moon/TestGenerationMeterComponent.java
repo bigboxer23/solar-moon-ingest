@@ -79,7 +79,9 @@ public class TestGenerationMeterComponent implements TestConstants {
 		assertNull(component.handleDeviceBody(null, TestDeviceComponent.clientId));
 		assertNull(component.handleDeviceBody(deviceXML, TestDeviceComponent.clientId + "invalid"));
 		assertNull(component.handleDeviceBody(nonUpdateStatus, TestDeviceComponent.clientId));
-		assertNull(component.handleDeviceBody(TestUtils.getDeviceXML(device2XmlNull, TestDeviceComponent.deviceName + 0, null), TestDeviceComponent.clientId));
+		assertNull(component.handleDeviceBody(
+				TestUtils.getDeviceXML(device2XmlNull, TestDeviceComponent.deviceName + 0, null),
+				TestDeviceComponent.clientId));
 
 		assertNotNull(component.handleDeviceBody(deviceXML, TestDeviceComponent.clientId));
 	}
