@@ -4,7 +4,6 @@ import com.bigboxer23.solar_moon.data.Customer;
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.web.Transaction;
-import com.bigboxer23.solar_moon.web.TransactionUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -45,6 +44,7 @@ public class GenerationMeterController implements MeterConstants {
 		this.customerComponent = customerComponent;
 	}
 
+	@Transaction
 	@GetMapping(value = "/validateDeviceInformation", produces = MediaType.APPLICATION_JSON_VALUE)
 	@Operation(
 			summary = "Test whether the information sent can log into a valid meter",
@@ -93,14 +93,10 @@ public class GenerationMeterController implements MeterConstants {
 			}
 			HttpHeaders httpHeaders = new HttpHeaders();
 			httpHeaders.setContentType(MediaType.TEXT_XML);
-			logger.info(TransactionUtil.getLoggingStatement()
-					+ "successfully uploaded data: "
-					+ data.getName()
-					+ " : "
-					+ data.getDate());
+			logger.info("successfully uploaded data: " + data.getName() + " : " + data.getDate());
 			return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 		} catch (XPathExpressionException | IOException e) {
-			logger.error(TransactionUtil.getLoggingStatement() + "uploadXmlContent:", e);
+			logger.error("uploadXmlContent:", e);
 			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -112,14 +108,14 @@ public class GenerationMeterController implements MeterConstants {
 	private String authenticateRequest(HttpServletRequest servletRequest) {
 		String authorization = servletRequest.getHeader("Authorization");
 		if (authorization == null || !authorization.startsWith("Basic ")) {
-			logger.warn(TransactionUtil.getLoggingStatement() + "Missing authorization token.");
+			logger.warn("Missing authorization token.");
 			return null;
 		}
 		String usernameAndPassword = authorization.substring(6);
 		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
 		String[] parts = decoded.split(":");
 		if (parts.length != 2) {
-			logger.warn(TransactionUtil.getLoggingStatement() + "Invalid auth, returning unauthorized: " + parts[0]);
+			logger.warn("Invalid auth, returning unauthorized: " + parts[0]);
 			return null;
 		}
 		String customerId = Optional.ofNullable(customerComponent.findCustomerIdByAccessKey(parts[1]))
@@ -128,7 +124,7 @@ public class GenerationMeterController implements MeterConstants {
 		if (customerId != null) {
 			return customerId;
 		}
-		logger.warn(TransactionUtil.getLoggingStatement() + "Invalid token, returning unauthorized: " + parts[1]);
+		logger.warn("Invalid token, returning unauthorized: " + parts[1]);
 		return null;
 	}
 }

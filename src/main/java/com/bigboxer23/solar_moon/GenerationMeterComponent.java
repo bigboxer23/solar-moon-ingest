@@ -4,7 +4,6 @@ import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceAttribute;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.open_search.OpenSearchComponent;
-import com.bigboxer23.solar_moon.web.TransactionUtil;
 import com.bigboxer23.utils.http.OkHttpUtil;
 import com.bigboxer23.utils.http.RequestBuilderCallback;
 import java.io.IOException;
@@ -119,16 +118,16 @@ public class GenerationMeterComponent implements MeterConstants {
 
 	public DeviceData handleDeviceBody(String body, String customerId) throws XPathExpressionException {
 		if (customerId == null || customerId.isBlank()) {
-			logger.error(TransactionUtil.getLoggingStatement() + "no customer id, not doing anything.");
+			logger.error("no customer id, not doing anything.");
 			return null;
 		}
 		if (body == null || body.isBlank()) {
-			logger.error(TransactionUtil.getLoggingStatement() + "no body, not doing anything.");
+			logger.error("no body, not doing anything.");
 			return null;
 		}
 		logger.debug("parsing device body: " + body);
 		if (!isUpdateEvent(body)) {
-			logger.debug(TransactionUtil.getLoggingStatement() + "event is not a LOGFILEUPLOAD, doing nothing.");
+			logger.debug("event is not a LOGFILEUPLOAD, doing nothing.");
 			return null;
 		}
 		Device device = Optional.ofNullable(findDeviceName(body))
@@ -140,7 +139,7 @@ public class GenerationMeterComponent implements MeterConstants {
 				.filter(DeviceData::isValid)
 				.orElse(null);
 		if (deviceData == null) {
-			logger.info(TransactionUtil.getLoggingStatement() + "device was not valid, not handling.");
+			logger.info("device was not valid, not handling.");
 			return null;
 		}
 		openSearch.logData(
