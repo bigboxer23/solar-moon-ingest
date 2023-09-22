@@ -88,12 +88,16 @@ public class GenerationMeterController implements MeterConstants {
 			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.UNAUTHORIZED);
 		}
 		try (BufferedReader reader = servletRequest.getReader()) {
-			DeviceData data = component.handleDeviceBody(IOUtils.toString(reader), customerId);
+			String body = IOUtils.toString(reader);
+			HttpHeaders httpHeaders = new HttpHeaders();
+			httpHeaders.setContentType(MediaType.TEXT_XML);
+			if (!component.isUpdateEvent(body)) {
+				return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
+			}
+			DeviceData data = component.handleDeviceBody(body, customerId);
 			if (data == null) {
 				return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.BAD_REQUEST);
 			}
-			HttpHeaders httpHeaders = new HttpHeaders();
-			httpHeaders.setContentType(MediaType.TEXT_XML);
 			logger.info("successfully uploaded data: " + data.getName() + " : " + data.getDate());
 			return new ResponseEntity<>(XML_SUCCESS_RESPONSE, httpHeaders, HttpStatus.OK);
 		} catch (XPathExpressionException | IOException e) {
