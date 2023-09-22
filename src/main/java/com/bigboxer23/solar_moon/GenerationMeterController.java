@@ -3,6 +3,7 @@ package com.bigboxer23.solar_moon;
 import com.bigboxer23.solar_moon.data.Customer;
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.web.AuthenticationUtils;
 import com.bigboxer23.solar_moon.web.Transaction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -82,7 +83,7 @@ public class GenerationMeterController implements MeterConstants {
 			requestBody = @RequestBody(description = "XML string content to parse"))
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
-		String customerId = authenticateRequest(servletRequest);
+		String customerId = AuthenticationUtils.authenticateRequest(servletRequest, customerComponent);
 		if (customerId == null) {
 			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.UNAUTHORIZED);
 		}
@@ -99,32 +100,5 @@ public class GenerationMeterController implements MeterConstants {
 			logger.error("uploadXmlContent:", e);
 			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.BAD_REQUEST);
 		}
-	}
-
-	/**
-	 * @param servletRequest
-	 * @return
-	 */
-	private String authenticateRequest(HttpServletRequest servletRequest) {
-		String authorization = servletRequest.getHeader("Authorization");
-		if (authorization == null || !authorization.startsWith("Basic ")) {
-			logger.warn("Missing authorization token.");
-			return null;
-		}
-		String usernameAndPassword = authorization.substring(6);
-		String decoded = new String(Base64.getDecoder().decode(usernameAndPassword));
-		String[] parts = decoded.split(":");
-		if (parts.length != 2) {
-			logger.warn("Invalid auth, returning unauthorized: " + parts[0]);
-			return null;
-		}
-		String customerId = Optional.ofNullable(customerComponent.findCustomerIdByAccessKey(parts[1]))
-				.map(Customer::getCustomerId)
-				.orElse(null);
-		if (customerId != null) {
-			return customerId;
-		}
-		logger.warn("Invalid token, returning unauthorized: " + parts[1]);
-		return null;
 	}
 }
