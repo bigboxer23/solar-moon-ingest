@@ -1,6 +1,5 @@
 package com.bigboxer23.solar_moon;
 
-import com.bigboxer23.solar_moon.data.Customer;
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
 import com.bigboxer23.solar_moon.web.AuthenticationUtils;
@@ -16,8 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Base64;
-import java.util.Optional;
 import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;

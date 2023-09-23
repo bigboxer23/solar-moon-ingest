@@ -7,7 +7,10 @@ import com.bigboxer23.solar_moon.open_search.OpenSearchUtils;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import javax.xml.xpath.XPathExpressionException;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,10 +27,27 @@ public class TestSiteComponent {
 	@Autowired
 	private OpenSearchComponent openComponent;
 
-	@Test
-	public void testHandleSite() throws XPathExpressionException, InterruptedException {
+	@BeforeEach
+	public void setup() {
 		TestUtils.setupSite(deviceComponent);
 		openComponent.deleteByCustomerId(TestDeviceComponent.clientId);
+	}
+
+	@Test
+	public void testHandleSiteConcurrent() throws InterruptedException {
+		Date date = TimeUtils.get15mRoundedDate();
+		CountDownLatch latch = new CountDownLatch(5);
+		for (int ai = 0; ai < 5; ai++) {
+			new Thread(new TestHandleBodyRunnable(ai, date, latch)).start();
+		}
+		latch.await();
+		OpenSearchUtils.waitForIndexing();
+		assertNotNull(
+				openComponent.getDeviceByTimePeriod(TestDeviceComponent.clientId, TestDeviceComponent.SITE, date));
+	}
+
+	@Test
+	public void testHandleSite() throws XPathExpressionException {
 		Date date = TimeUtils.get15mRoundedDate();
 		for (int ai = 0; ai < 4; ai++) {
 			generationComponent.handleDeviceBody(
@@ -42,9 +62,7 @@ public class TestSiteComponent {
 	}
 
 	@Test
-	public void testHandleSiteInterleaved() throws XPathExpressionException, InterruptedException {
-		TestUtils.setupSite(deviceComponent);
-		openComponent.deleteByCustomerId(TestDeviceComponent.clientId);
+	public void testHandleSiteInterleaved() throws XPathExpressionException {
 		Date date = TimeUtils.get15mRoundedDate();
 		LocalDateTime ldt = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 		Date past =
@@ -74,5 +92,26 @@ public class TestSiteComponent {
 				TestUtils.getDeviceXML(TestDeviceComponent.deviceName + 4, date), TestDeviceComponent.clientId);
 		OpenSearchUtils.waitForIndexing();
 		TestUtils.validateDateData(openComponent, TestDeviceComponent.SITE, date);
+	}
+
+	private class TestHandleBodyRunnable implements Runnable {
+		private final int count;
+		private final Date date;
+
+		private final CountDownLatch latch;
+
+		public TestHandleBodyRunnable(int count, Date date, CountDownLatch latch) {
+			this.count = count;
+			this.date = date;
+			this.latch = latch;
+		}
+
+		@SneakyThrows
+		@Override
+		public void run() {
+			generationComponent.handleDeviceBody(
+					TestUtils.getDeviceXML(TestDeviceComponent.deviceName + count, date), TestDeviceComponent.clientId);
+			latch.countDown();
+		}
 	}
 }
