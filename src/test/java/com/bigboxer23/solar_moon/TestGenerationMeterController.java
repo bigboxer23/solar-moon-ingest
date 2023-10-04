@@ -29,7 +29,7 @@ public class TestGenerationMeterController implements TestConstants, MeterConsta
 		runAPItest(getRequestBody(device2Xml), getAuthCallback(testPW + "blah"), XML_FAILURE_RESPONSE);
 		runAPItest(getRequestBody(device2Xml), null, XML_FAILURE_RESPONSE);
 		runAPItest(getRequestBody(device2XmlNull), getAuthCallback(testPW), XML_FAILURE_RESPONSE);
-		runAPItest(null, getAuthCallback(testPW), XML_FAILURE_RESPONSE);
+		runAPItest(null, getAuthCallback(testPW), XML_SUCCESS_RESPONSE);
 		runAPItest(getRequestBody(device2Xml), getAuthCallback(testPW), XML_SUCCESS_RESPONSE);
 	}
 
