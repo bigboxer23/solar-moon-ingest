@@ -2,6 +2,7 @@ package com.bigboxer23.solar_moon;
 
 import com.bigboxer23.solar_moon.data.Device;
 import com.bigboxer23.solar_moon.data.DeviceData;
+import com.bigboxer23.solar_moon.open_search.OpenSearchComponent;
 import com.bigboxer23.solar_moon.web.AuthenticationUtils;
 import com.bigboxer23.solar_moon.web.Transaction;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,9 +38,15 @@ public class GenerationMeterController implements MeterConstants {
 
 	private CustomerComponent customerComponent;
 
-	public GenerationMeterController(GenerationMeterComponent theComponent, CustomerComponent customerComponent) {
-		component = theComponent;
-		this.customerComponent = customerComponent;
+	public GenerationMeterController() {
+		OpenSearchComponent OSComponent = new OpenSearchComponent();
+		DeviceComponent deviceComponent = new DeviceComponent();
+		component = new GenerationMeterComponent(
+				OSComponent,
+				new AlarmComponent(new OpenWeatherComponent()),
+				deviceComponent,
+				new SiteComponent(OSComponent, deviceComponent));
+		this.customerComponent = new CustomerComponent();
 	}
 
 	@Transaction
@@ -80,7 +87,7 @@ public class GenerationMeterController implements MeterConstants {
 			requestBody = @RequestBody(description = "XML string content to parse"))
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
-		String customerId = AuthenticationUtils.authenticateRequest(servletRequest, customerComponent);
+		String customerId = AuthenticationUtils.authenticateRequest(servletRequest.getHeader("Authorization"), customerComponent);
 		if (customerId == null) {
 			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.UNAUTHORIZED);
 		}
