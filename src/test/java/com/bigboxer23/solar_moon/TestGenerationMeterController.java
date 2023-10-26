@@ -46,7 +46,8 @@ public class TestGenerationMeterController implements TestConstants, MeterConsta
 
 	private RequestBody getRequestBody(String deviceXML) {
 		return RequestBody.create(
-				TestUtils.getDeviceXML(deviceXML, TestDeviceComponent.deviceName + 0, TimeUtils.get15mRoundedDate()),
+				TestUtils.getDeviceXML(
+						deviceXML, TestDeviceComponent.deviceName + 0, TimeUtils.get15mRoundedDate(), -1),
 				MediaType.parse("application/xml; charset=utf-8"));
 	}
 }
