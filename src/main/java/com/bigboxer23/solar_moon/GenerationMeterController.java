@@ -87,7 +87,8 @@ public class GenerationMeterController implements MeterConstants {
 			requestBody = @RequestBody(description = "XML string content to parse"))
 	@PostMapping(value = "/upload")
 	public ResponseEntity<String> uploadXmlContent(HttpServletRequest servletRequest) {
-		String customerId = AuthenticationUtils.authenticateRequest(servletRequest.getHeader("Authorization"), customerComponent);
+		String customerId =
+				AuthenticationUtils.authenticateRequest(servletRequest.getHeader("Authorization"), customerComponent);
 		if (customerId == null) {
 			return new ResponseEntity<>(XML_FAILURE_RESPONSE, HttpStatus.UNAUTHORIZED);
 		}
