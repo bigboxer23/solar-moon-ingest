@@ -33,16 +33,6 @@
       <version>7.4</version>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>6.8.23</version>
-    </dependency>
-    <dependency>
-      <groupId>org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-high-level-client</artifactId>
-      <version>6.8.23</version>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
@@ -153,26 +143,26 @@
         <version>3.1.0</version>
         <executions>
           <execution>
-            <id>Uploading jar to server</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>package</phase>
-            <configuration>
-              <executable>scp</executable>
-              <commandlineArgs>-i ${identity_file} ${project.basedir}/target/solar-moon-ingest-1.0.jar ${user}@${host}:~/</commandlineArgs>
-            </configuration>
-          </execution>
-          <execution>
-            <id>Restarting remote service</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>package</phase>
-            <configuration>
-              <executable>ssh</executable>
-              <commandlineArgs>-i ${identity_file} ${user}@${host} sudo systemctl restart generation-meter.service</commandlineArgs>
-            </configuration>
+				<id>Uploading jar to server</id>
+				<goals>
+				  <goal>exec</goal>
+				</goals>
+				<phase>package</phase>
+				<configuration>
+				  <executable>scp</executable>
+				  <commandlineArgs>-i ${identity_file} ${project.basedir}/target/solar-moon-ingest-1.0.jar ${user}@${host}:~/</commandlineArgs>
+				</configuration>
+			  </execution>
+			  <execution>
+				<id>Restarting remote service</id>
+				<goals>
+				  <goal>exec</goal>
+				</goals>
+				<phase>package</phase>
+				<configuration>
+				  <executable>ssh</executable>
+				  <commandlineArgs>-i ${identity_file} ${user}@${host} sudo systemctl restart generation-meter.service</commandlineArgs>
+				</configuration>
           </execution>
         </executions>
       </plugin>
